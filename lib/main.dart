@@ -12,7 +12,107 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: TabBarWidget(),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Time Manager'),
+          backgroundColor: Colors.black,
+        ),
+        body: TabBarWidget(),
+
+        floatingActionButton: FloatingActionButtonWidget(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      )
+    );
+  }
+}
+
+class WorkItem {
+  DateTime StartDate;
+  DateTime EndDate;
+  int ProjectID;
+  int WorkItemID;
+  String Summary;
+  String Details;
+
+
+  WorkItem(DateTime startDate, DateTime endDate, int projectID, int workItemID, String summary, String details) {
+    this.StartDate = startDate;
+    this.EndDate = endDate;
+    this.ProjectID = projectID;
+    this.WorkItemID = workItemID;
+    this.Summary = summary;
+    this.Details = details;
+  }
+}
+
+class HistoryTabPage extends StatefulWidget {
+  @override
+  _HistoryTabPageState createState() => _HistoryTabPageState();
+}
+
+class _HistoryTabPageState extends State<HistoryTabPage> {
+  final _workItems = <WorkItem>[
+    new WorkItem(DateTime.now(), DateTime.now(), 1, 1, 'testing', 'testing a work item'),
+    new WorkItem(DateTime.now(), DateTime.now(), 2, 2, 'testing2', 'testing a work item 2'),
+  ];
+  
+  @override
+  Widget build(BuildContext context) {
+    return _buildHistoryList();
+  }
+
+  Widget _buildHistoryList(){
+    return
+      ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemBuilder: (context, i){
+        if(i <= _workItems.length){
+          if(i.isOdd){
+            return Divider();
+          }
+
+          final index = i ~/ 2; //divides i by 2 and returns an integer result
+
+          return _buildTile(_workItems[index]);
+        }
+        else{
+          return null;
+        }
+      },
+    );
+  }
+
+  Widget _buildTile(WorkItem workItem){
+    return ListTile(
+      title: Text('${workItem.StartDate} - ${workItem.EndDate} (${workItem.ProjectID}, ${workItem.WorkItemID})'),
+      subtitle: Text('${workItem.Summary} \n${workItem.Details}'),
+      isThreeLine: true,
+      onTap: _openWorkItemDetails,
+      trailing: Icon(Icons.edit),
+    );
+  }
+
+  void _openWorkItemDetails(){
+    print('this will eventually push the details view');
+  }
+}
+
+class FloatingActionButtonWidget extends StatefulWidget {
+  //combine this with a bottom navigation bar is a bottomAppBar for a notch in the bottom bar
+  final floatingActionButtonLocation = FloatingActionButtonLocation.centerDocked;
+  @override
+  _FloatingActionButtonWidgetState createState() => _FloatingActionButtonWidgetState();
+}
+
+class _FloatingActionButtonWidgetState extends State<FloatingActionButtonWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () => setState(() {
+        //push add view
+      }),
+      tooltip: 'Add a new Work Item',
+      child: Icon(Icons.add),
     );
   }
 }
@@ -26,8 +126,6 @@ class TabBarWidget extends StatefulWidget {
 }
 
 class _TabBarWidget extends State<TabBarWidget> {
-
-
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called
@@ -56,9 +154,7 @@ class _TabBarWidget extends State<TabBarWidget> {
             );
             break;
           case 1:
-            return new Container(
-              color: Colors.blue,
-            );
+            return HistoryTabPage();
             break;
           case 2:
             return new Container(
