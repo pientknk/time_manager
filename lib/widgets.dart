@@ -13,7 +13,7 @@ class HomePageWidget extends StatefulWidget {
 }
 
 class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStateMixin{
-  Widget _tabBodyWidget = _homeTabWidget;
+  Widget _tabBodyWidget = _getHomeTabPage();
 
   void _selectedTab(int index) {
     setState(() {
@@ -24,13 +24,13 @@ class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStat
   void _setTabBody(int index){
     switch(index){
       case 0:
-        _tabBodyWidget = _homeTabWidget;
+        _tabBodyWidget = _getHomeTabPage();
         break;
       case 1:
-        _tabBodyWidget = Container(
-          child: HistoryTabPage(),
-          color: Colors.white,
-        );
+        _tabBodyWidget = HistoryTabPage(
+            containerColor: Colors.white,
+            containerPadding: const EdgeInsets.all(10),
+          );
         break;
       default:
         _tabBodyWidget = null;
@@ -38,27 +38,12 @@ class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStat
     }
   }
 
-  static Widget _homeTabWidget = Container(
-      padding: const EdgeInsets.all(10),
-      color: Colors.white,
-      child: Center(
-        child: TextFormField(
-          decoration: InputDecoration(
-              labelText: "Input Label",
-              icon: Icon(Icons.input),
-              fillColor: Colors.white,
-              border: new OutlineInputBorder()
-          ),
-          validator: (val){
-            if(val.length == 0){
-              return "Error";
-            }else{
-              return null;
-            }
-          },
-        ),
-      )
-  );
+  static Widget _getHomeTabPage(){
+    return HomeTabPage(
+      containerColor: Colors.white,
+      containerPadding: const EdgeInsets.all(10),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

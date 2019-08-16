@@ -4,7 +4,13 @@ import 'package:time_manager/helpers.dart';
 import 'dart:async';
 
 class HistoryTabPage extends StatefulWidget {
-  HistoryTabPage({Key key}) : super(key: key);
+  HistoryTabPage({
+    Key key,
+    this.containerColor,
+    this.containerPadding}) : super(key: key);
+
+  final Color containerColor;
+  final EdgeInsetsGeometry containerPadding;
 
   @override
   _HistoryTabPageState createState() => _HistoryTabPageState();
@@ -18,7 +24,11 @@ class _HistoryTabPageState extends State<HistoryTabPage> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildHistoryList();
+    return Container(
+      child: _buildHistoryList(),
+      padding: widget.containerPadding,
+      color: widget.containerColor,
+    );
   }
 
   Widget _buildHistoryList(){
@@ -52,6 +62,47 @@ class _HistoryTabPageState extends State<HistoryTabPage> {
 
   void _openWorkItemDetails(){
     print('this will eventually push the details view');
+  }
+}
+
+class HomeTabPage extends StatefulWidget {
+  HomeTabPage({
+    Key key,
+    this.containerColor,
+    this.containerPadding
+  }) : super(key: key);
+
+  final Color containerColor;
+  final EdgeInsetsGeometry containerPadding;
+
+  @override
+  _HomeTabPageState createState() => _HomeTabPageState();
+}
+
+class _HomeTabPageState extends State<HomeTabPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: widget.containerPadding,
+      color: widget.containerColor,
+      child: Center(
+        child: TextFormField(
+          decoration: InputDecoration(
+            labelText: "Input Label",
+            icon: Icon(Icons.input),
+            fillColor: Colors.white,
+            border: new OutlineInputBorder()
+          ),
+          validator: (val){
+            if(val.length == 0){
+              return "Error";
+            }else{
+              return null;
+            }
+          },
+        ),
+      )
+    );
   }
 }
 
