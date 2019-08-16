@@ -12,16 +12,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Time Manager'),
-          backgroundColor: Colors.black,
-        ),
-        body: TabBarWidget(),
-
-        floatingActionButton: FloatingActionButtonWidget(),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      ),
+      home: HomePageWidget(title: 'Time Manager')
     );
   }
 }

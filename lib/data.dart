@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class WorkItem {
   DateTime startDate;
   DateTime endDate;
@@ -14,4 +16,11 @@ class WorkItem {
     this.summary = summary;
     this.details = details;
   }
+}
+
+class BottomAppBarTab{
+  BottomAppBarTab({this.text, this.icon});
+
+  IconData icon;
+  String text;
 }

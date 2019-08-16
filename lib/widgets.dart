@@ -1,8 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:time_manager/tab_pages.dart';
+import 'package:time_manager/data.dart';
+
+class HomePageWidget extends StatefulWidget {
+  HomePageWidget({Key key, this.title}) : super(key: key);
+
+  final String title;
+
+  @override
+  _HomePageWidgetState createState() => _HomePageWidgetState();
+}
+
+class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStateMixin{
+  Widget _tabBodyWidget = _homeTabWidget;
+
+  void _selectedTab(int index) {
+    setState(() {
+      _setTabBody(index);
+    });
+  }
+
+  void _setTabBody(int index){
+    switch(index){
+      case 0:
+        _tabBodyWidget = _homeTabWidget;
+        break;
+      case 1:
+        _tabBodyWidget = Container(
+          child: HistoryTabPage(),
+          color: Colors.white,
+        );
+        break;
+      default:
+        _tabBodyWidget = null;
+        break;
+    }
+  }
+
+  static Widget _homeTabWidget = Container(
+      padding: const EdgeInsets.all(10),
+      color: Colors.white,
+      child: Center(
+        child: TextFormField(
+          decoration: InputDecoration(
+              labelText: "Input Label",
+              icon: Icon(Icons.input),
+              fillColor: Colors.white,
+              border: new OutlineInputBorder()
+          ),
+          validator: (val){
+            if(val.length == 0){
+              return "Error";
+            }else{
+              return null;
+            }
+          },
+        ),
+      )
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        backgroundColor: Colors.black,
+        actions: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(5),
+            child: Icon(Icons.settings),
+          )
+        ],
+      ),
+      body: _tabBodyWidget,
+      floatingActionButton: FloatingActionButtonWidget(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBarWidget(
+        color: Colors.grey[300],
+        selectedColor: Colors.green[600],
+        notchedShape: CircularNotchedRectangle(),
+        onTabSelected: _selectedTab,
+        items: [
+          BottomAppBarTab(icon: Icons.home, text: 'HOME'),
+          BottomAppBarTab(icon: Icons.history, text: 'HISTORY'),
+        ], //Tabs
+        backgroundColor: Colors.black,
+      ),
+    );
+  }
+}
 
 class FloatingActionButtonWidget extends StatefulWidget {
+  FloatingActionButtonWidget({Key key}) : super(key: key);
+
   //combine this with a bottom navigation bar is a bottomAppBar for a notch in the bottom bar
   final floatingActionButtonLocation = FloatingActionButtonLocation.centerDocked;
   @override
@@ -22,81 +113,86 @@ class _FloatingActionButtonWidgetState extends State<FloatingActionButtonWidget>
   }
 }
 
-class TabBarWidget extends StatefulWidget {
-  ///constructor?
-  //final String title;
+class BottomAppBarWidget extends StatefulWidget {
+  BottomAppBarWidget({
+    this.items,
+    this.height: 60.0,
+    this.iconSize: 25.0,
+    this.backgroundColor,
+    this.color,
+    this.selectedColor,
+    this.notchedShape,
+    this.onTabSelected
+  }) {
+    assert(this.items.length == 2); //want to enforce there to be 2 tabs
+  }
 
-  @override
-  _TabBarWidget createState() => _TabBarWidget();
+  final List<BottomAppBarTab> items;
+  final double height;
+  final double iconSize;
+  final Color backgroundColor;
+  final Color color;
+  final Color selectedColor;
+  final NotchedShape notchedShape;
+  final ValueChanged<int> onTabSelected;
+
+  State<StatefulWidget> createState() => _BottomAppBarWidgetState();
 }
 
-class _TabBarWidget extends State<TabBarWidget> {
+class _BottomAppBarWidgetState extends State<BottomAppBarWidget> {
+  int _selectedIndex = 0;
+
+  _updateIndex(int index){
+    widget.onTabSelected(index);
+    setState((){
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called
-    return CupertinoTabScaffold(
-      tabBar: CupertinoTabBar(
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            title: Text('HOME'),
-          ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              title: Text('HISTORY')
-          ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              title: Text('SETTINGS')
-          )
-        ],
-      ),
-      tabBuilder: (BuildContext context, int index){
-        switch(index) {
-          case 0:
-            return new Container(
-              color: Colors.red,
-            );
-            break;
-          case 1:
-            return Container(
-              child: HistoryTabPage(),
-              color: Colors.grey[200],
-            );
-            break;
-          case 2:
-            return new Container(
-              color: Colors.green,
-            );
-            break;
-        }
+    List<Widget> items = List.generate(widget.items.length, (int index){
+      return _buildTabItem(
+        item: widget.items[index],
+        index: index,
+        onPressed: _updateIndex,
+      );
+    });
 
-        return null;
-      },
-    );
-    /*return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          bottom: TabBar(
-            tabs: <Widget>[
-              Tab(icon: Icon(Icons.directions_car)),
-              Tab(icon: Icon(Icons.directions_transit)),
-              Tab(icon: Icon(Icons.directions_bike)),
-              Tab(icon: Icon(Icons.directions_boat))
-            ],
-          ),
-          title: Text('Time Manager'),
-        ),
-        body: TabBarView(
-          children: <Widget>[
-            Icon(Icons.directions_car),
-            Icon(Icons.directions_transit),
-            Icon(Icons.directions_bike),
-            Icon(Icons.directions_boat)
-          ],
-        )
+    return BottomAppBar(
+      shape: widget.notchedShape,
+      color: widget.backgroundColor,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: items,
       )
-    );*/
+    );
+  }
+
+  Widget _buildTabItem({BottomAppBarTab item, int index, ValueChanged<int> onPressed}){
+    Color color = _selectedIndex == index ? widget.selectedColor : widget.color;
+    return Expanded(
+      child: SizedBox(
+        height: widget.height,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: () => onPressed(index),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(item.icon, color: color, size: widget.iconSize),
+                Text(
+                  item.text,
+                  style: TextStyle(color: color),
+                )
+              ],
+            )
+          )
+        ),
+      )
+    );
   }
 }

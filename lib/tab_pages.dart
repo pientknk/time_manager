@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:time_manager/data.dart';
 import 'package:time_manager/helpers.dart';
+import 'dart:async';
 
 class HistoryTabPage extends StatefulWidget {
+  HistoryTabPage({Key key}) : super(key: key);
+
   @override
   _HistoryTabPageState createState() => _HistoryTabPageState();
 }
@@ -49,5 +52,36 @@ class _HistoryTabPageState extends State<HistoryTabPage> {
 
   void _openWorkItemDetails(){
     print('this will eventually push the details view');
+  }
+}
+
+class WorkItemFormPage extends StatefulWidget {
+  WorkItemFormPage({Key key}) : super(key: key);
+
+  @override
+  _WorkItemFormPageState createState() => _WorkItemFormPageState();
+}
+
+class _WorkItemFormPageState extends State<WorkItemFormPage> {
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+          ),
+          TextFormField(
+
+          ),
+          Padding(
+
+          )
+        ],
+      )
+    );
   }
 }
