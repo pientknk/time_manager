@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:time_manager/data.dart';
 import 'package:time_manager/helpers.dart';
+import 'package:time_manager/widgets.dart';
 import 'dart:async';
 
 class HistoryTabPage extends StatefulWidget {
@@ -18,8 +19,26 @@ class HistoryTabPage extends StatefulWidget {
 
 class _HistoryTabPageState extends State<HistoryTabPage> {
   final _workItems = <WorkItem>[
-    WorkItem(DateTime.now(), DateTime.now(), 1, 1, 'testing', 'testing a work item'),
-    WorkItem(DateTime.now(), DateTime.now(), 2, 2, 'testing2', 'testing a work item 2'),
+    WorkItem(
+      workItemID: 1,
+      createdTime: DateTime.now(),
+      updatedTime: DateTime.now(),
+      projectID: 1,
+      summary: 'Testing 1',
+      details: 'This is a test',
+      startTime: DateTime.now().subtract(Duration(hours: 1)),
+      endTime: DateTime.now().subtract(Duration(minutes: 7))
+    ),
+    WorkItem(
+        workItemID: 2,
+        createdTime: DateTime.now(),
+        updatedTime: DateTime.now(),
+        projectID: 1,
+        summary: 'Testing 2',
+        details: 'This is another test because why not?',
+        startTime: DateTime.now().subtract(Duration(hours: 2)),
+        endTime: DateTime.now().subtract(Duration(minutes: 15))
+    ),
   ];
 
   @override
@@ -53,7 +72,7 @@ class _HistoryTabPageState extends State<HistoryTabPage> {
 
   Widget _buildTile(WorkItem workItem){
     return ListTile(
-      title: Text('${shortDateFormat(workItem.startDate)} - ${shortDateFormat(workItem.endDate)} (${workItem.projectID}, ${workItem.workItemID})'),
+      title: Text('${shortDateFormat(workItem.startTime)} - ${shortDateFormat(workItem.endTime)} (${workItem.projectID}, ${workItem.workItemID})'),
       subtitle: Text('${workItem.summary} \n${workItem.details}'),
       isThreeLine: true,
       onTap: _openWorkItemDetails,
@@ -134,5 +153,63 @@ class _WorkItemFormPageState extends State<WorkItemFormPage> {
         ],
       )
     );
+  }
+}
+
+class CurrentProjectsTab extends StatefulWidget {
+  CurrentProjectsTab({
+    Key key
+  }) : super(key: key);
+
+  _CurrentProjectsTabState createState() => _CurrentProjectsTabState();
+}
+
+class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
+  final _projectCards = <ProjectCard>[
+    ProjectCard(),
+    ProjectCard(),
+    ProjectCard(),
+    ProjectCard(),
+    ProjectCard(),
+    ProjectCard(),
+    ProjectCard(),
+    ProjectCard(),
+  ];
+
+  //eventually i will care that we are loading all cards right away, need to update to load a set number and then add more dynamically
+  Widget _buildProjectCards() {
+    return Container(
+      color: Colors.grey[600],
+      child: SafeArea(
+        top: true,
+        bottom: true,
+        child: GridView.builder(
+          itemCount: _projectCards.length,
+          padding: const EdgeInsets.all(3.5),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 4,
+            mainAxisSpacing: 4
+          ),
+          itemBuilder: (BuildContext context, int index){
+//        final i = index ~/ 2; //2 cards per row so don't load more unless we hit past this
+//        if(i > _projectCards.length){
+//          _projectCards.addAll()
+//        }
+            return new GestureDetector(
+              child: _projectCards[index],
+              onTap: () {
+                print("I've been tapped");
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildProjectCards();
   }
 }
