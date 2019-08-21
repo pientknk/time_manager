@@ -42,10 +42,6 @@ class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStat
   }
 
   static Widget _getCurrentProjectsTab(){
-//    return HomeTabPage(
-//      containerColor: Colors.white,
-//      containerPadding: const EdgeInsets.all(10),
-//    );
     return CurrentProjectsTab();
   }
 
@@ -300,6 +296,34 @@ class _ProjectCardState extends State<ProjectCard> {
     );
   }
 
+  Widget _buildProjectName2(){
+    return Expanded(
+      flex: 1,
+      child: Container(
+        padding: const EdgeInsets.only(bottom: 5),
+        decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[900], width: 3)
+          )
+        ),
+        child: Center(
+          child: AutoSizeText('wow this is a really long amount for a project wtf',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            maxLines: 3,
+            minFontSize: 16,
+            textAlign: TextAlign.center,
+            semanticsLabel: 'n/a',
+            overflow: TextOverflow.ellipsis,
+          ),
+        )
+      )
+    );
+  }
+
   //longest project description allowed: 120 chars
   Widget _buildProjectDescription(){
     return Expanded(
@@ -320,6 +344,104 @@ class _ProjectCardState extends State<ProjectCard> {
           ),
           Expanded(
             child: _buildProjectColumn('Items', '23'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHoursAndWorkItemsColumn2(){
+    return Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        textDirection: TextDirection.ltr,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              verticalDirection: VerticalDirection.down,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Flex(
+                  direction: Axis.vertical,
+                  children: <Widget>[
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      child: AutoSizeText('HOURS:',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        minFontSize: 13,
+                        maxLines: 1,
+                        semanticsLabel: 'n/a',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      child: AutoSizeText('27:37',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.green,
+                        ),
+                        maxLines: 1,
+                        minFontSize: 14,
+                        semanticsLabel: 'n/a',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  ],
+                )
+              ],
+            ),
+          ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              verticalDirection: VerticalDirection.down,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Flex(
+                  direction: Axis.vertical,
+                  children: <Widget>[
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      child: AutoSizeText('ITEMS:',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        minFontSize: 13,
+                        maxLines: 1,
+                        semanticsLabel: 'n/a',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      child: AutoSizeText('23',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.green,
+                        ),
+                        maxLines: 1,
+                        minFontSize: 14,
+                        semanticsLabel: 'n/a',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  ],
+                )
+              ],
+            ),
           ),
         ],
       ),
@@ -359,6 +481,65 @@ class _ProjectCardState extends State<ProjectCard> {
     );
   }
 
+  Widget _buildProjectRow2(){
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Flex(
+          direction: Axis.horizontal,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(2),
+              child: AutoSizeText('STARTED:',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                minFontSize: 13,
+                maxLines: 1,
+                semanticsLabel: 'n/a',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(2),
+              child: AutoSizeText('10/23/2019',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.green,
+                ),
+                maxLines: 1,
+                minFontSize: 14,
+                semanticsLabel: 'n/a',
+                overflow: TextOverflow.ellipsis,
+              ),
+            )
+          ],
+        )
+      ],
+    );
+  }
+
+  List<Widget> _getCard1(){
+    return [
+      _buildProjectName(),
+      _buildProjectDescription(),
+      _buildHoursAndWorkItemsColumn(),
+      _buildProjectRow('Started', veryShortDateFormat(DateTime(2019, 10, 23))),
+      _buildProjectRow('Finished', veryShortDateFormat(DateTime(2019, 10, 27))),
+    ];
+  }
+
+  List<Widget> _getCard2(){
+    return [
+      _buildProjectName2(),
+      _buildHoursAndWorkItemsColumn2(),
+      _buildProjectRow2(),
+    ];
+  }
+
   Widget _buildCard(){
     return Flex(
       direction: Axis.vertical,
@@ -370,13 +551,7 @@ class _ProjectCardState extends State<ProjectCard> {
               mainAxisAlignment: MainAxisAlignment.start,
               verticalDirection: VerticalDirection.down,
               mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                _buildProjectName(),
-                _buildProjectDescription(),
-                _buildHoursAndWorkItemsColumn(),
-                _buildProjectRow('Started', veryShortDateFormat(DateTime(2019, 10, 23))),
-                _buildProjectRow('Finished', veryShortDateFormat(DateTime(2019, 10, 27))),
-              ],
+              children: _getCard2(),
             ),
           )
         )

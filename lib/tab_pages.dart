@@ -179,13 +179,13 @@ class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
   //eventually i will care that we are loading all cards right away, need to update to load a set number and then add more dynamically
   Widget _buildProjectCards() {
     return Container(
-      color: Colors.grey[600],
+      color: Colors.black,
       child: SafeArea(
         top: true,
         bottom: true,
         child: GridView.builder(
           itemCount: _projectCards.length,
-          padding: const EdgeInsets.all(3.5),
+          padding: const EdgeInsets.all(4),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 4,
