@@ -18,3 +18,14 @@ String veryShortDateFormat(DateTime dateTime){
 Color hexToColor(String code){
   return new Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
 }
+
+/// Formats the given [Duration] to a String representation of hh:mm
+String shortDurationFormat(Duration duration){
+  String _ensureTwoDigits(int amount){
+    return amount > 10 ? '$amount' : '0$amount';
+  }
+
+  String durationInHours = _ensureTwoDigits(duration.inHours);
+  String durationInMinutes = _ensureTwoDigits(duration.inMinutes % 60);
+  return '$durationInHours:$durationInMinutes';
+}

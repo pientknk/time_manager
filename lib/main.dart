@@ -10,8 +10,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Time Manager',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        cursorColor: Colors.green,
+        fontFamily: 'Livvic',
       ),
+      ///can't have an InitialRoute and a home property
       home: HomePageWidget(title: 'Time Manager')
     );
   }

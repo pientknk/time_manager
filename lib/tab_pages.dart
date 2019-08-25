@@ -3,89 +3,7 @@ import 'package:time_manager/data.dart';
 import 'package:time_manager/helpers.dart';
 import 'package:time_manager/widgets.dart';
 import 'dart:async';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:time_manager/theme.dart';
-
-class HistoryTabPage extends StatefulWidget {
-  HistoryTabPage({
-    Key key,
-    this.containerColor,
-    this.containerPadding}) : super(key: key);
-
-  final Color containerColor;
-  final EdgeInsetsGeometry containerPadding;
-
-  @override
-  _HistoryTabPageState createState() => _HistoryTabPageState();
-}
-
-class _HistoryTabPageState extends State<HistoryTabPage> {
-  /*final _workItems = <WorkItem>[
-    WorkItem(
-      workItemID: 1,
-      createdTime: DateTime.now(),
-      updatedTime: DateTime.now(),
-      projectID: 1,
-      summary: 'Testing 1',
-      details: 'This is a test',
-      startTime: DateTime.now().subtract(Duration(hours: 1)),
-      endTime: DateTime.now().subtract(Duration(minutes: 7))
-    ),
-    WorkItem(
-        workItemID: 2,
-        createdTime: DateTime.now(),
-        updatedTime: DateTime.now(),
-        projectID: 1,
-        summary: 'Testing 2',
-        details: 'This is another test because why not?',
-        startTime: DateTime.now().subtract(Duration(hours: 2)),
-        endTime: DateTime.now().subtract(Duration(minutes: 15))
-    ),
-  ];*/
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: _buildHistoryList(),
-      padding: widget.containerPadding,
-      color: widget.containerColor,
-    );
-  }
-
-  Widget _buildHistoryList(){
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemBuilder: (context, i){
-        return null;
-        /*if(i <= _workItems.length){
-          if(i.isOdd){
-            return Divider();
-          }
-
-          final index = i ~/ 2; //divides i by 2 and returns an integer result
-
-          return _buildTile(_workItems[index]);
-        }
-        else{
-          return null;
-        }*/
-      },
-    );
-  }
-
-  Widget _buildTile(WorkItem workItem){
-    return ListTile(
-      title: Text('${shortDateFormat(workItem.startTime)} - ${shortDateFormat(workItem.endTime)} (${workItem.projectID}, ${workItem.workItemID})'),
-      subtitle: Text('${workItem.summary} \n${workItem.details}'),
-      isThreeLine: true,
-      onTap: _openWorkItemDetails,
-    );
-  }
-
-  void _openWorkItemDetails(){
-    print('this will eventually push the details view');
-  }
-}
 
 class HomeTabPage extends StatefulWidget {
   HomeTabPage({
@@ -165,16 +83,16 @@ class CurrentProjectsTab extends StatefulWidget {
 }
 
 class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
-  final _projectCards = <ProjectCard>[
-    ProjectCard(),
-    ProjectCard(),
-    ProjectCard(),
-    ProjectCard(),
-    ProjectCard(),
-    ProjectCard(),
-    ProjectCard(),
-    ProjectCard(),
-  ];
+  static Iterable<ProjectCard> _createProjectCards(Iterable<Project> projects) sync* {
+    for(Project project in projects){
+      yield ProjectCard(project: project);
+    }
+  }
+
+  static final _projects = GetData.getProjects().toList(growable: false);
+  static final _filters = GetData.getFilters().toList(growable: false);
+
+  static final _projectCards = _createProjectCards(_projects).toList(growable: false);
 
   //eventually i will care that we are loading all cards right away, need to update to load a set number and then add more dynamically
   Widget _buildProjectCards() {
@@ -207,21 +125,9 @@ class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
       ),
     );
 
-    final _listViewOption = Column(
-      children: <Widget>[
-        Flexible(
-            child: Container(
-              color: Colors.black,
-              child: ListView.builder(
-                itemExtent: 160,
-                itemCount: _projectCards.length,
-                itemBuilder: (_, index) => CardRow(),
-              ),
-            )
-        )
-      ],
-    );
+    final _listViewOption = TabWidgets.buildProjectListView(_projects, _filters[0]);
 
+    //TODO: update this to change the card theme for now, but this should be easier to do in the application at some point
     int index = 1;
     if(index == 0){
       return _gridViewOption;
@@ -236,24 +142,91 @@ class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
   }
 }
 
-class CardRow extends StatelessWidget{
-  //final ProjectCard project;
+class AvailableProjectsTab extends StatefulWidget {
+  AvailableProjectsTab({Key key}) : super(key: key);
 
-  CardRow();
+  _AvailableProjectsTabState createState() => _AvailableProjectsTabState();
+}
+
+class _AvailableProjectsTabState extends State<AvailableProjectsTab> {
+  static final _projects = GetData.getProjects().toList(growable: false);
+  static final _filters = GetData.getFilters().toList(growable: false);
+
+  @override
+  Widget build(BuildContext context) {
+    return TabWidgets.buildProjectListView(_projects, _filters[1]);
+  }
+}
+
+class CompletedProjectsTab extends StatefulWidget {
+  CompletedProjectsTab({Key key}) : super(key: key);
+  
+  _CompletedProjectsTabState createState() => _CompletedProjectsTabState();
+}
+
+class _CompletedProjectsTabState extends State<CompletedProjectsTab> {
+  static final _projects = GetData.getProjects().toList(growable: false);
+  static final _filters = GetData.getFilters().toList(growable: false);
+
+  @override
+  Widget build(BuildContext context) {
+    return TabWidgets.buildProjectListView(_projects, _filters[2]);
+  }
+}
+
+class TabWidgets{
+  const TabWidgets();
+
+  static Widget buildProjectListView(List<Project> projects, Filter filter){
+    projects.sort((pr1, pr2) =>
+      filter.isDescending
+          ? pr1.name.compareTo(pr2.name)
+          : pr2.name.compareTo(pr1.name));
+
+    final filteredProjects = projects.where((pr) => pr.status == filter.status).toList(growable: false);
+
+    if(filteredProjects.isEmpty){
+      return Container(
+        color: Colors.black,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Center(
+              child: ThemeText.headerText('No Records'),
+            )
+          ],
+        ),
+      );
+    }else{
+      return Column(
+        children: <Widget>[
+          Flexible(
+            child: Container(
+              color: Colors.black,
+              child: ListView.builder(
+                itemExtent: 160,
+                itemCount: filteredProjects.length,
+                itemBuilder: (_, index) => CardRow(project: filteredProjects[index]),
+              ),
+            )
+          )
+        ],
+      );
+    }
+  }
+}
+
+class CardRow extends StatelessWidget{
+  final Project project;
+
+  CardRow({Key key, this.project}) : super(key: key);
 
   Widget _buildHeader(String text){
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
-          child: AutoSizeText(text,
-            style: TextStyles.headerText,
-            maxLines: 2,
-            minFontSize: 18,
-            textAlign: TextAlign.left,
-            semanticsLabel: 'n/a',
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: ThemeText.headerText(text)
         ),
         Container(
           margin: const EdgeInsets.only(left: 10, right: 10, top: 2, bottom: 2),
@@ -272,25 +245,11 @@ class CardRow extends StatelessWidget{
           children: <Widget>[
             Expanded(
               flex: 1,
-              child: AutoSizeText(label,
-                style: TextStyles.labelText,
-                maxLines: 2,
-                minFontSize: 14,
-                textAlign: TextAlign.center,
-                semanticsLabel: 'n/a',
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: ThemeText.labelText(label)
             ),
             Expanded(
               flex: 1,
-              child: AutoSizeText(dataText,
-                style: TextStyles.highlightedDataText,
-                maxLines: 2,
-                minFontSize: 14,
-                textAlign: TextAlign.center,
-                semanticsLabel: 'n/a',
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: ThemeText.highlightedText(dataText)
             ),
           ],
         ),
@@ -304,15 +263,15 @@ class CardRow extends StatelessWidget{
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          _buildLabelAndData('Hours', '10:39'),
-          _buildLabelAndData('Items', '29'),
-          _buildLabelAndData('Started', '10/25/2019'),
+          _buildLabelAndData('Hours', shortDurationFormat(project.totalHours)),
+          _buildLabelAndData('Items', project.workItemCount.toString()),
+          _buildLabelAndData('Started', veryShortDateFormat(project.startedTime ?? DateTime.now())),
         ],
       )
     );
   }
 
-  Widget _buildCardRowContents(){
+  Widget _buildCardRow(){
     return Row(
       children: <Widget>[
         Expanded(
@@ -321,7 +280,7 @@ class CardRow extends StatelessWidget{
             children: <Widget>[
               Expanded(
                 flex: 2,
-                child: _buildHeader('wow this is a really long amount for a project wtf how?'),
+                child: _buildHeader(project.name),
               ),
               Expanded(
                 flex: 3,
@@ -336,7 +295,7 @@ class CardRow extends StatelessWidget{
             margin: const EdgeInsets.only(top: 10),
             child: Column(
               children: <Widget>[
-                Icon(Icons.more_vert, color: Colors.white, size: 30,)
+                Icon(Icons.more_vert, color: Colors.white, size: 26,)
               ],
             ),
           ),
@@ -345,9 +304,8 @@ class CardRow extends StatelessWidget{
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final mainPart = Container(
+  Widget _buildCardContents(){
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
@@ -363,18 +321,24 @@ class CardRow extends StatelessWidget{
         ],
       ),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        constraints: BoxConstraints.expand(),
-        child: _buildCardRowContents()
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          constraints: BoxConstraints.expand(),
+          child: _buildCardRow()
       ),
     );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Container(
       height: 120,
       margin: const EdgeInsets.only(top: 16, bottom: 8),
       child: FlatButton(
-        onPressed: () => print('ya ya'),
-        child: mainPart,
+        onPressed: () =>
+            Navigator.push(context,
+                MaterialPageRoute(
+                    builder: (context) => ProjectDetail())),
+        child: _buildCardContents(),
       ),
     );
   }

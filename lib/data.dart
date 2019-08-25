@@ -56,21 +56,20 @@ class Project implements Data {
   final int systemID;
   final String name;
   final String details;
-  final StatusTypes status;
+  final String status;
   final DateTime startedTime;
   final DateTime completedTime;
   final Duration totalHours;
-  final int workItems;
+  final int workItemCount;
 
   Project._({@required this.projectID, @required this.systemID, @required this.name, @required this.details, @required this.status,
-    this.createdTime, this.updatedTime, this.totalHours, this.workItems, this.startedTime, this.completedTime});
+    this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime});
 
-  factory Project(int projectID, int systemID, String name, String details, {StatusTypes status = StatusTypes.available}){
-    Duration totalHours = Duration(hours: 11, minutes: 38);
+  factory Project(int projectID, int systemID, String name, String details, {Duration totalHours = const Duration(hours: 11, minutes: 38),
+    String status = StatusTypes.available, int workItems = 19}){
     DateTime createdTime = DateTime.now();
-    int workItems = 19;
     return Project._(projectID: projectID, systemID: systemID, createdTime: createdTime, updatedTime: createdTime,
-      name: name, details: details, status: status, totalHours: totalHours, workItems: workItems
+      name: name, details: details, status: status, totalHours: totalHours, workItemCount: workItems
     );
   }
 
@@ -87,11 +86,11 @@ class Project implements Data {
   }
 }
 
-enum StatusTypes {
-  assigned,
-  available,
-  finished,
-  voided
+class StatusTypes {
+  static const String assigned = "Assigned";
+  static const String available = "Available";
+  static const String finished = "Finished";
+  static const String voided = "Voided";
 }
 
 class Filter implements Data {
@@ -102,15 +101,15 @@ class Filter implements Data {
   final bool isDefault;
   final bool isDescending;
   final String name;
+  final String status;
 
   Filter._({@required this.filterID, @required this.isDefault, @required this.isDescending, @required this.name,
-    this.createdTime, this.updatedTime, this.filterXML,
-  });
+    this.createdTime, this.updatedTime, this.filterXML, this.status});
 
-  factory Filter(int filterID, String name, bool isDefault, bool isDescending){
+  factory Filter(int filterID, String name, bool isDefault, bool isDescending, {status = StatusTypes.available}){
     DateTime createdTime = DateTime.now();
     return Filter._(filterID: filterID, isDefault: isDefault, isDescending: isDescending, name: name, createdTime: createdTime,
-      updatedTime: createdTime, filterXML: 'no filter xml');
+      updatedTime: createdTime, filterXML: 'no filter xml', status: status);
   }
 
   Filter.fromFilter(Filter filter) :
@@ -120,7 +119,8 @@ class Filter implements Data {
     this.filterXML = filter.filterXML,
     this.isDefault = filter.isDefault,
     this.isDescending = filter.isDescending,
-    this.name = filter.name;
+    this.name = filter.name,
+    this.status = filter.status;
 
   @override
   bool delete() {
@@ -144,10 +144,10 @@ class Application implements Data{
   final String version;
   final DateTime workStartedDate;
   final Duration totalHours;
-  final Duration totalWorkItems;
+  final Duration workItemsCount;
 
   Application._({@required this.systemID, @required this.name, @required this.description, this.createdTime,
-    this.updatedTime, this.version, this.workStartedDate, this.totalHours, this.totalWorkItems});
+    this.updatedTime, this.version, this.workStartedDate, this.totalHours, this.workItemsCount});
 
   factory Application(int systemID, String name, String description){
     String version = '0.1';
@@ -177,26 +177,40 @@ class Settings {
 class GetData{
   const GetData();
 
-  static getFilters(){
+  static Iterable<WorkItem> getWorkItems(){
     return [
-      Filter(1, 'Current', true, true),
-      Filter(2, 'Available', true, true),
-      Filter(3, 'Completed', true, true),
+      WorkItem(1, 1, 'I did some work today', 'The work was real good'),
+      WorkItem(2, 1, 'I did some more work today', 'I did some more work today on the same project'),
+      WorkItem(3, 1, 'Still working', 'holy cow I did even more work on this project'),
+      WorkItem(4, 2, 'Now this is the 2nd project worked on', 'I did some of this and some of that ya know?')
     ];
   }
 
-  static getProjects(){
+  static Iterable<Filter> getFilters(){
     return [
-      Project(1, 1, 'This is my first project yo', 'Since this is my first project I should probly do something'),
-      Project(2, 1, 'This is a second project so this is good', 'wow I can\'t believe this is my second project'),
-      Project(3, 1, 'Oof third project is a lot of work', 'Can I go home?'),
-      Project(4, 1, 'Now this is just a lot of work', 'Since this is a lot of work I must be making a lot of prorgress'),
-      Project(5, 1, 'What if this was like the 5th project?', '5 projects is a lot man, what should i do now?'),
-      Project(6, 1, 'Time manager should work', 'yeah lets make time manager work this time instead of bailing out'),
+      Filter(1, 'Current', true, true, status: StatusTypes.assigned),
+      Filter(2, 'Available', true, false, status: StatusTypes.available),
+      Filter(3, 'Completed', true, true, status: StatusTypes.finished),
     ];
   }
 
-  static getApplications(){
+  static Iterable<Project> getProjects(){
+    return [
+      Project(1, 1, 'This is my first project yo', 'Since this is my first project I should probly do something',
+          workItems: 23, totalHours: Duration(hours: 9, minutes: 23), status: StatusTypes.assigned),
+      Project(2, 1, 'This is a second project so this is good', 'wow I can\'t believe this is my second project',
+          workItems: 1, totalHours: Duration(hours: 1, minutes: 1)),
+      Project(3, 1, 'Oof third project is a lot of work', 'Can I go home?',
+          workItems: 15, totalHours: Duration(hours: 3, minutes: 0)),
+      Project(4, 1, 'Now this is just a lot of work', 'Since this is a lot of work I must be making a lot of prorgress', workItems: 9),
+      Project(5, 1, 'What if this was like the 5th project?', '5 projects is a lot man, what should i do now?',
+          workItems: 123, totalHours: Duration(hours: 127, minutes: 59), status: StatusTypes.finished),
+      Project(6, 1, 'Time manager should work', 'yeah lets make time manager work this time instead of bailing out',
+          totalHours: Duration(hours: 7, minutes: 59)),
+    ];
+  }
+
+  static Iterable<Application> getApplications(){
     return [
       Application(1, 'Time Manager', 'A mobile app to manage time developing personal projects'),
       Application(2, 'Jodeler', 'A mobile app to choose jodels to send to your friends'),

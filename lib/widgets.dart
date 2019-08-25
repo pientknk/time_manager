@@ -5,6 +5,7 @@ import 'package:time_manager/material_data.dart';
 import 'package:time_manager/data.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:time_manager/helpers.dart';
+import 'package:time_manager/theme.dart';
 
 class HomePageWidget extends StatefulWidget {
   HomePageWidget({Key key, this.title}) : super(key: key);
@@ -16,7 +17,7 @@ class HomePageWidget extends StatefulWidget {
 }
 
 class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStateMixin{
-  Widget _tabBodyWidget = _getCurrentProjectsTab();
+  Widget _tabBodyWidget = CurrentProjectsTab();
 
   void _selectedTab(int index) {
     setState(() {
@@ -27,51 +28,63 @@ class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStat
   void _setTabBody(int index){
     switch(index){
       case 0:
-        _tabBodyWidget = _getCurrentProjectsTab();
+        _tabBodyWidget = CurrentProjectsTab();
         break;
       case 1:
-        _tabBodyWidget = HistoryTabPage(
-            containerColor: Colors.white,
-            containerPadding: const EdgeInsets.all(10),
-          );
+        _tabBodyWidget = AvailableProjectsTab();
         break;
-      default:
-        _tabBodyWidget = null;
+      case 2:
+        _tabBodyWidget = CompletedProjectsTab();
         break;
     }
   }
 
-  static Widget _getCurrentProjectsTab(){
-    return CurrentProjectsTab();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        backgroundColor: Colors.black,
-        actions: <Widget>[
-          Container(
-            padding: const EdgeInsets.all(5),
-            child: Icon(Icons.settings),
-          )
-        ],
-      ),
+    return AppScaffold(
+      appBarTitle: Text('Time Manager'),
+      appBarActions: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(5),
+          child: Icon(Icons.settings),
+        )
+      ],
       body: _tabBodyWidget,
       floatingActionButton: FloatingActionButtonWidget(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: BottomAppBarWidget(
-        color: Colors.grey[300],
-        selectedColor: Colors.green[600],
+        color: ThemeColors.unselectedButtonColor,
+        selectedColor: ThemeColors.highlightedData,
         onTabSelected: _selectedTab,
         items: [
-          BottomAppBarTab(icon: Icons.timelapse, text: 'CURRENT'),
+          BottomAppBarTab(icon: Icons.timelapse, text: 'ASSIGNED'),
           BottomAppBarTab(icon: Icons.event_available, text: 'AVAILABLE'),
           BottomAppBarTab(icon: Icons.history, text: 'COMPLETED'),
         ], //Tabs
         backgroundColor: Colors.black,
       ),
+    );
+  }
+}
+
+class AppScaffold extends StatelessWidget {
+  AppScaffold({this.appBarTitle, this.appBarActions, this.body, this.floatingActionButton, this.bottomNavigationBar});
+
+  final Widget appBarTitle;
+  final List<Widget> appBarActions;
+  final Widget body;
+  final Widget floatingActionButton;
+  final Widget bottomNavigationBar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: appBarTitle,
+      ),
+      body: body,
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: bottomNavigationBar,
     );
   }
 }
@@ -93,7 +106,9 @@ class _FloatingActionButtonWidgetState extends State<FloatingActionButtonWidget>
         //push add view
       }),
       tooltip: 'Add a new Work Item',
-      child: Icon(Icons.add),
+      child: Icon(Icons.add, size: 27,),
+      backgroundColor: ThemeColors.highlightedData,
+      foregroundColor: ThemeColors.unselectedButtonColor,
     );
   }
 }
@@ -182,10 +197,11 @@ class _BottomAppBarWidgetState extends State<BottomAppBarWidget> {
   }
 }
 
+///TODO: this could probably be a stateless widget since nothing on it updates while the user is looking at this screen (for now)
 class ProjectCard extends StatefulWidget {
   ProjectCard({
     Key key,
-    //this.project,
+    this.project,
     //this.color,
     //this.splashColor,
     //this.textColor = Colors.white,
@@ -193,7 +209,7 @@ class ProjectCard extends StatefulWidget {
     //this.text
   }) : super(key: key);
 
-  //final Project project;
+  final Project project;
   //final Color color;
   //final Color splashColor;
   //final Color textColor;
@@ -292,7 +308,7 @@ class _ProjectCardState extends State<ProjectCard> {
   Widget _buildProjectName(){
     return Expanded(
       flex: 0,
-      child: _buildHeaderText('wow this is a really long amount for a project wtf')
+      child: _buildHeaderText(widget.project.name)
     );
   }
 
@@ -307,7 +323,7 @@ class _ProjectCardState extends State<ProjectCard> {
           )
         ),
         child: Center(
-          child: AutoSizeText('wow this is a really long amount for a project wtf',
+          child: AutoSizeText(widget.project.name,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -328,7 +344,7 @@ class _ProjectCardState extends State<ProjectCard> {
   Widget _buildProjectDescription(){
     return Expanded(
       flex: 0,
-      child: _buildInfoText('well if this is not a project description then I don\'t know what is but it should contain some info that is useful ya ya')
+      child: _buildInfoText(widget.project.details)
     );
   }
 
@@ -340,10 +356,10 @@ class _ProjectCardState extends State<ProjectCard> {
         textDirection: TextDirection.ltr,
         children: <Widget>[
           Expanded(
-            child: _buildProjectColumn('Hours', '10:36'),
+            child: _buildProjectColumn('Hours', shortDurationFormat(widget.project.totalHours)),
           ),
           Expanded(
-            child: _buildProjectColumn('Items', '23'),
+            child: _buildProjectColumn('Items', widget.project.workItemCount.toString()),
           ),
         ],
       ),
@@ -383,7 +399,7 @@ class _ProjectCardState extends State<ProjectCard> {
                     ),
                     Container(
                       padding: const EdgeInsets.all(2),
-                      child: AutoSizeText('27:37',
+                      child: AutoSizeText(shortDurationFormat(widget.project.totalHours),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -426,7 +442,7 @@ class _ProjectCardState extends State<ProjectCard> {
                     ),
                     Container(
                       padding: const EdgeInsets.all(2),
-                      child: AutoSizeText('23',
+                      child: AutoSizeText(widget.project.workItemCount.toString(),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -504,7 +520,7 @@ class _ProjectCardState extends State<ProjectCard> {
             ),
             Container(
               padding: const EdgeInsets.all(2),
-              child: AutoSizeText('10/23/2019',
+              child: AutoSizeText(veryShortDateFormat(widget.project.startedTime),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
@@ -527,7 +543,7 @@ class _ProjectCardState extends State<ProjectCard> {
       _buildProjectName(),
       _buildProjectDescription(),
       _buildHoursAndWorkItemsColumn(),
-      _buildProjectRow('Started', veryShortDateFormat(DateTime(2019, 10, 23))),
+      _buildProjectRow('Started', veryShortDateFormat(widget.project.startedTime)),
       _buildProjectRow('Finished', veryShortDateFormat(DateTime(2019, 10, 27))),
     ];
   }
@@ -572,6 +588,43 @@ class _ProjectCardState extends State<ProjectCard> {
       color: Colors.grey[850],
       margin: const EdgeInsets.all(2.5),
       elevation: 5.0,
+    );
+  }
+}
+
+class ProjectDetail extends StatefulWidget {
+  ProjectDetail({Key key}) : super(key: key);
+
+  _ProjectDetailState createState() => _ProjectDetailState();
+}
+
+class _ProjectDetailState extends State<ProjectDetail> {
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      appBarTitle: Text('Project Details'),
+      appBarActions: <Widget>[
+
+      ],
+      body: ProjectDetails(),
+    );
+  }
+}
+
+class ProjectDetails extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Container(
+      color: Colors.black,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Center(
+            child: ThemeText.headerText('No Records'),
+          )
+        ],
+      ),
     );
   }
 }
