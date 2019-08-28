@@ -6,6 +6,7 @@ import 'package:time_manager/data.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:time_manager/helpers.dart';
 import 'package:time_manager/theme.dart';
+import 'package:time_manager/data.dart';
 
 class HomePageWidget extends StatefulWidget {
   HomePageWidget({Key key, this.title}) : super(key: key);
@@ -42,7 +43,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBarTitle: Text('Time Manager'),
+      appBarTitle: ThemeText.appBarText('Time Manager'),
       appBarActions: <Widget>[
         Container(
           padding: const EdgeInsets.all(5),
@@ -60,7 +61,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with TickerProviderStat
           BottomAppBarTab(icon: Icons.event_available, text: 'AVAILABLE'),
           BottomAppBarTab(icon: Icons.history, text: 'COMPLETED'),
         ], //Tabs
-        backgroundColor: Colors.black,
+        backgroundColor: ThemeColors.appMain,
       ),
     );
   }
@@ -80,6 +81,8 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: appBarTitle,
+        backgroundColor: ThemeColors.appMain,
+        actions: appBarActions,
       ),
       body: body,
       floatingActionButton: floatingActionButton,
@@ -592,39 +595,201 @@ class _ProjectCardState extends State<ProjectCard> {
   }
 }
 
-class ProjectDetail extends StatefulWidget {
-  ProjectDetail({Key key}) : super(key: key);
+class ProjectDetailScreen extends StatefulWidget {
+  final Project project;
 
-  _ProjectDetailState createState() => _ProjectDetailState();
+  ProjectDetailScreen(this.project);
+
+  _ProjectDetailScreenState createState() => _ProjectDetailScreenState();
+
 }
 
-class _ProjectDetailState extends State<ProjectDetail> {
+class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+
+  final _formKey = GlobalKey<FormState>();
+  bool isTrue = true;
+  bool switchTrue = true;
+
+  Widget _getProjectForm(){
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ThemeInput.textFormField(
+            label: 'Name',
+            initialValue: widget.project.name,
+            validatorFunc: (val) {
+              if (val.isEmpty) {
+                return "Please enter some value";
+              } else {
+                return null;
+              }
+            }
+          ),
+          ThemeInput.checkboxListTile(
+            label: 'checkbox',
+            value: isTrue,
+            onChangedFunc: (bool val) => setState(() => isTrue = val)),
+          ThemeInput.switchTileList(
+            label: 'switch',
+            value: switchTrue,
+            onChangedFunc: (bool val) => setState(() => switchTrue = val)),
+        ],
+      )
+    );
+  }
+
+  Widget _getAppBody(){
+    return Container(
+      padding: const EdgeInsets.all(8),
+      color: ThemeColors.unselectedButtonColor,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Expanded(
+            child: _getProjectForm(),
+          )
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBarTitle: Text('Project Details'),
+      appBarTitle: ThemeText.appBarText(widget.project.name),
       appBarActions: <Widget>[
-
+        Container(
+          padding: const EdgeInsets.all(5),
+          child: Icon(Icons.delete_forever),
+        )
       ],
-      body: ProjectDetails(),
+      body: _getAppBody(),
     );
   }
 }
 
-class ProjectDetails extends StatelessWidget {
+class ProjectEditScreen extends StatefulWidget {
+  ProjectEditScreen({Key key, this.project}) : super(key: key);
+
+  final Project project;
+
+  _ProjectEditScreenState createState() => _ProjectEditScreenState();
+}
+
+class _ProjectEditScreenState extends State<ProjectEditScreen> {
+  @override
+  void initState(){
+    status = StatusTypes.options[0];
+    super.initState();
+  }
+
+  final _formKey = GlobalKey<FormState>();
+
+  String status;
+  void changedDropDown(String value) {
+    setState(() {
+      status = value;
+    });
+  }
+
+  Widget _getEditForm(){
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      color: ThemeColors.card,
+      child: Form(
+        key: _formKey,
+        autovalidate: true,
+        child: Theme(
+          data: ThemeData(
+            primaryColor: ThemeColors.highlightedData,
+            hintColor: Colors.grey[400],
+          ),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            children: <Widget>[
+              ThemeInput.textFormField(
+                label: 'Name',
+                //initialValue: widget.project.name,
+                validatorFunc: (val) {
+                  if(val.isEmpty) {
+                    return 'errors';
+                  } else {
+                    return null;
+                  }
+                }
+              ),
+              Divider(height: 5,),
+              ThemeInput.textFormField(
+                label: 'Details',
+                initialValue: widget.project.details,
+                validatorFunc: (val) {
+                  if(val.isEmpty) {
+                    return 'errors';
+                  } else {
+                    return null;
+                  }
+                }
+              ),
+              Divider(height: 5,),
+              FormField(
+                builder: (FormFieldState state) {
+                  return Container(
+                    margin: const EdgeInsets.all(3),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'STATUS',
+                        isDense: true,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
+                        ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
+                        )
+                      ),
+                      isEmpty: status == '',
+                      child: ThemeInput.dropdownButtonHideUnderline(
+                        originalValue: status,
+                        items: StatusTypes.options,
+                        onChangedFunc: (String value){
+                          setState(() {
+                            status = value;
+                            state.didChange(value);
+                        });
+                      })
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        )
+      ),
+    );
+  }
+
+  Widget _buildContents(){
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: _getEditForm(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    return Container(
-      color: Colors.black,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Center(
-            child: ThemeText.headerText('No Records'),
-          )
-        ],
-      ),
+    return AppScaffold(
+      appBarTitle: ThemeText.appBarText('Edit Project'),
+      appBarActions: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(5),
+          child: Icon(Icons.delete_forever),
+        )
+      ],
+      body: _buildContents(),
     );
   }
 }

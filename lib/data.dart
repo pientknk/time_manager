@@ -91,6 +91,7 @@ class StatusTypes {
   static const String available = "Available";
   static const String finished = "Finished";
   static const String voided = "Voided";
+  static const options = ["Select an Option", assigned, available, finished, voided];
 }
 
 class Filter implements Data {

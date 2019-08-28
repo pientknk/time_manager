@@ -97,7 +97,7 @@ class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
   //eventually i will care that we are loading all cards right away, need to update to load a set number and then add more dynamically
   Widget _buildProjectCards() {
     final _gridViewOption = Container(
-      color: Colors.black,
+      color: ThemeColors.appMain,
       child: SafeArea(
         top: true,
         bottom: true,
@@ -187,7 +187,7 @@ class TabWidgets{
 
     if(filteredProjects.isEmpty){
       return Container(
-        color: Colors.black,
+        color: ThemeColors.appMain,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -202,7 +202,7 @@ class TabWidgets{
         children: <Widget>[
           Flexible(
             child: Container(
-              color: Colors.black,
+              color: ThemeColors.appMain,
               child: ListView.builder(
                 itemExtent: 160,
                 itemCount: filteredProjects.length,
@@ -271,7 +271,61 @@ class CardRow extends StatelessWidget{
     );
   }
 
-  Widget _buildCardRow(){
+  Widget _buildPopupMenuItemContents(int value, IconData iconData, String label){
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: Icon(iconData, color: Colors.white,),
+            flex: 1,
+          ),
+          Expanded(
+            child: Text(label.toUpperCase(), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            flex: 2,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectPopUpMenu(BuildContext context){
+    return Theme(
+      data: Theme.of(context).copyWith(
+        cardColor: ThemeColors.card,
+      ),
+      child: PopupMenuButton<int>(
+        elevation: 4,
+        icon: Icon(Icons.more_vert, color: ThemeColors.mainText,),
+        onSelected: (value) {
+          switch(value){
+            case 1:
+              Navigator.push(context,
+                MaterialPageRoute(
+                  builder: (context) => ProjectDetailScreen(project)));
+              break;
+            case 2:
+              Navigator.push(context,
+                MaterialPageRoute(
+                  builder: (context) => ProjectEditScreen(project: project)));
+              break;
+            case 3:
+              return null;
+          }
+        },
+        itemBuilder: (context) => [
+          _buildPopupMenuItemContents(1, Icons.details, 'details'),
+          PopupMenuDivider(height: 3),
+          _buildPopupMenuItemContents(2, Icons.edit, 'edit'),
+          PopupMenuDivider(height: 3),
+          _buildPopupMenuItemContents(3, Icons.delete_forever, 'delete'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardRow(BuildContext context){
     return Row(
       children: <Widget>[
         Expanded(
@@ -292,10 +346,17 @@ class CardRow extends StatelessWidget{
         Expanded(
           flex: 1,
           child: Container(
-            margin: const EdgeInsets.only(top: 10),
+            margin: const EdgeInsets.only(top: 6),
             child: Column(
               children: <Widget>[
-                Icon(Icons.more_vert, color: Colors.white, size: 26,)
+                _buildProjectPopUpMenu(context)
+                /*GestureDetector(
+                  child: Icon(Icons.more_vert, color: Colors.white, size: 26),
+                  onTap: () => _buildProjectPopUpMenu(context)
+                      //Navigator.push(context,
+                      //MaterialPageRoute(
+                       //   builder: (context) => AppScaffold(appBarTitle: Text('hi'), body: Container(), ))),
+                ),*/
               ],
             ),
           ),
@@ -304,7 +365,7 @@ class CardRow extends StatelessWidget{
     );
   }
 
-  Widget _buildCardContents(){
+  Widget _buildCardContents(BuildContext context){
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -323,7 +384,7 @@ class CardRow extends StatelessWidget{
       child: Container(
           margin: const EdgeInsets.symmetric(vertical: 6),
           constraints: BoxConstraints.expand(),
-          child: _buildCardRow()
+          child: _buildCardRow(context)
       ),
     );
   }
@@ -337,8 +398,8 @@ class CardRow extends StatelessWidget{
         onPressed: () =>
             Navigator.push(context,
                 MaterialPageRoute(
-                    builder: (context) => ProjectDetail())),
-        child: _buildCardContents(),
+                    builder: (context) => ProjectDetailScreen(project))),
+        child: _buildCardContents(context),
       ),
     );
   }

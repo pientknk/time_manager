@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-
+import 'package:device_info/device_info.dart';
 
 ///Formats the given DateTime into a string consisting of MM/dd/yyyy hh:mm.
 /// See [DateFormat]
