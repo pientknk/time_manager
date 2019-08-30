@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:time_manager/helpers.dart';
 
 class ThemeColors{
   const ThemeColors();
@@ -103,20 +107,134 @@ class ThemeText {
 class ThemeInput {
   const ThemeInput();
 
-  static Container dropdownButtonHideUnderline({@required String originalValue, @required List<String> items, ValueChanged<String> onChangedFunc}){
+  static Container _inputContainer({Widget child}) {
+    return Container(
+      margin: const EdgeInsets.all(2),
+      child: child,
+    );
+  }
+
+  static OutlineInputBorder outlineInputBorder = OutlineInputBorder(
+    borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
+  );
+
+  static InputDecoration inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label.toUpperCase(),
+      enabledBorder: outlineInputBorder,
+      border: outlineInputBorder
+    );
+  }
+
+  static Container datePickerFormField({BuildContext context}) {
+    return _inputContainer(
+      child: FlatButton(
+        onPressed: () {
+          DatePicker.showDatePicker(context,
+            showTitleActions: true,
+            minTime: DateTime(2000, 1, 1),
+            maxTime: DateTime(2022, 12, 31),
+          onChanged: (date) {
+            print('change $date');
+          },
+          onConfirm: (date) {
+            print('confirm $date');
+          },
+          currentTime: DateTime.now(), locale: LocaleType.en);},
+        child: Text('Show DateTime Picker',)
+      )
+    );
+  }
+
+  static Container dateTimeFieldBasicDate({BuildContext context}) {
+    return _inputContainer(
+      child: DateTimeField(
+        format: DateFormat(veryShortDateFormatString),
+        onShowPicker: (context, currentValue) {
+          return showDatePicker(
+            context: context,
+            firstDate: DateTime(1900),
+            initialDate: currentValue ?? DateTime.now(),
+            lastDate: DateTime(2100));
+        },
+      ),
+    );
+  }
+
+  static Container dateTimeFieldBasicTime({BuildContext context}) {
+    return _inputContainer(
+      child: DateTimeField(
+        format: DateFormat("hh:mm a"),
+        onShowPicker: (context, currentValue) async {
+          final time = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.fromDateTime(currentValue ?? DateTime.now()),
+          );
+          return DateTimeField.convert(time);
+        },
+      ),
+    );
+  }
+
+  static Container dateTimeField({BuildContext context, DateFormat format, DateTime originalValue, String label, bool enabled = true}) {
+    return _inputContainer(
+      child: DateTimeField(
+        enabled: enabled,
+        style: ThemeTextStyles.formText,
+        decoration: inputDecoration(label),
+        initialValue: originalValue,
+        format: format ?? DateFormat(detailedDateFormatString),
+        onShowPicker: (context, currentValue) async {
+          final date = await showDatePicker(
+            context: context,
+            firstDate: DateTime(1900),
+            initialDate: currentValue ?? DateTime.now(),
+            lastDate: DateTime(2100));
+          if (date != null) {
+            final time = await showTimePicker(
+              context: context,
+              initialTime: TimeOfDay.fromDateTime(currentValue ?? DateTime(2019)),
+            );
+            DateTime combined = DateTimeField.combine(date, time);
+            return combined;
+          } else {
+            return currentValue;
+          }
+        },
+      ),
+    );
+  }
+
+  static Container intFormField({String label, String initialValue, FormFieldValidator<String> validatorFunc, bool enabled = true}) {
+    return _inputContainer(
+      child: TextFormField(
+        style: ThemeTextStyles.formText,
+        initialValue: initialValue,
+        validator: validatorFunc,
+        enabled: enabled,
+        maxLines: 1,
+        cursorColor: ThemeColors.highlightedData,
+        decoration: inputDecoration(label),
+        keyboardType: TextInputType.number,
+      )
+    );
+  }
+
+  static Container dropdownButtonHideUnderline({@required String originalValue, @required List<String> items, ValueChanged<String> onChangedFunc, bool enabled = true}){
     final List<DropdownMenuItem<String>> _dropDownMenuItems = List.generate(items.length, (index) {
       return DropdownMenuItem<String>(
         value: items[index],
-        child: Text(items[index])
+        child: Text(items[index]),
       ) ;
     });
 
-    return Container(
-      margin: const EdgeInsets.all(3),
+    return _inputContainer(
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+          iconDisabledColor: Colors.grey,
+          disabledHint: Text(originalValue, style: ThemeTextStyles.formText),
           value: originalValue,
-          items: _dropDownMenuItems,
+          items: enabled ? _dropDownMenuItems : null,
           onChanged: onChangedFunc,
           elevation: 4,
           isDense: true,
@@ -126,22 +244,17 @@ class ThemeInput {
     );
   }
 
-  static Container textFormField({@required String label, String initialValue, FormFieldValidator<String> validatorFunc, bool enabled = true}) {
-    final _outlineInputBorder = OutlineInputBorder(
-      borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
-    );
-    return Container(
-      margin: const EdgeInsets.all(3),
+  static Container textFormField({@required String label, String initialValue, FormFieldValidator<String> validatorFunc,
+    bool enabled = true, int maxLines}) {
+    return _inputContainer(
       child: TextFormField(
         style: ThemeTextStyles.formText,
         initialValue: initialValue,
         validator: validatorFunc,
         enabled: enabled,
-        decoration: InputDecoration(
-          labelText: label.toUpperCase(),
-          enabledBorder: _outlineInputBorder,
-          border: _outlineInputBorder
-        ),
+        maxLines: maxLines ?? 1,
+        cursorColor: ThemeColors.highlightedData,
+        decoration: inputDecoration(label)
       ),
     );
   }
@@ -172,6 +285,79 @@ class ThemeInput {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8)
       ),
+    );
+  }
+}
+
+class ThemeForm {
+  const ThemeForm();
+
+  static Widget buildFormFieldDropdown({String labelText, String value, ValueChanged<String> onChangedFunc, List<String> options, bool enabled = true}) {
+    OutlineInputBorder outlineInputBorder = OutlineInputBorder(
+      borderSide: BorderSide(color: ThemeColors.unselectedButtonColor));
+
+    return FormField(
+      enabled: enabled,
+      builder: (FormFieldState state) {
+        return Container(
+          margin: const EdgeInsets.all(2),
+          child: InputDecorator(
+            decoration: InputDecoration(
+              labelText: labelText.toUpperCase(),
+              labelStyle: enabled ? null : TextStyle(color: Colors.grey),
+              isDense: true,
+              enabledBorder: outlineInputBorder,
+              border: outlineInputBorder),
+            isEmpty: value == '',
+            child: ThemeInput.dropdownButtonHideUnderline(
+              originalValue: value,
+              items: options,
+              onChangedFunc: onChangedFunc,
+              enabled: enabled
+            )
+          ),
+        );
+      },
+    );
+  }
+
+  static Widget buildFormRowFromFields({Iterable<Widget> children}){
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: children.map((childWidget){
+          return Expanded(
+            child: childWidget,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  static Widget buildForm({@required GlobalKey<FormState> formKey, @required List<Widget> listViewChildren}){
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      color: ThemeColors.card,
+      child: Form(
+        key: formKey,
+        autovalidate: true,
+        child: Theme(
+          data: ThemeData(
+            primaryColor: ThemeColors.highlightedData,
+            hintColor: Colors.cyan[200],
+            disabledColor: Colors.grey,
+          ),
+          child: ListView.separated(
+            itemBuilder: (BuildContext context, int index){
+              return listViewChildren[index];
+            },
+            separatorBuilder: (BuildContext context, int index){
+              return Divider(height: 5);
+            },
+            itemCount: listViewChildren.length,
+          ),
+        )),
     );
   }
 }

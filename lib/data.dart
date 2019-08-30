@@ -2,17 +2,15 @@ import 'package:time_manager/abstracts.dart';
 import 'package:flutter/foundation.dart';
 
 class WorkItem implements Data{
-
-  ///the id for the object
-  final int workItemID;
-  final DateTime createdTime;
-  final DateTime updatedTime;
-  final DateTime startTime;
-  final DateTime endTime;
-  final int projectID;
-  final String summary;
-  final String details;
-  final Duration duration;
+  int workItemID;
+  DateTime createdTime;
+  DateTime updatedTime;
+  DateTime startTime;
+  DateTime endTime;
+  int projectID;
+  String summary;
+  String details;
+  Duration duration;
 
   WorkItem._({@required this.workItemID, @required this.startTime, @required this.projectID, @required this.summary,
     @required this.details, this.createdTime, this.updatedTime, this.endTime, this.duration});
@@ -50,26 +48,30 @@ class WorkItem implements Data{
 }
 
 class Project implements Data {
-  final int projectID;
-  final DateTime createdTime;
-  final DateTime updatedTime;
-  final int systemID;
-  final String name;
-  final String details;
-  final String status;
-  final DateTime startedTime;
-  final DateTime completedTime;
-  final Duration totalHours;
-  final int workItemCount;
+  int projectID;
+  DateTime createdTime;
+  DateTime updatedTime;
+  int applicationID;
+  String applicationName;
+  String name;
+  String details;
+  String status;
+  DateTime startedTime;
+  DateTime completedTime;
+  Duration totalHours;
+  int workItemCount;
 
-  Project._({@required this.projectID, @required this.systemID, @required this.name, @required this.details, @required this.status,
-    this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime});
+  Project._({@required this.projectID, @required this.applicationID, @required this.name, @required this.details, @required this.status,
+    this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime, this.applicationName});
 
   factory Project(int projectID, int systemID, String name, String details, {Duration totalHours = const Duration(hours: 11, minutes: 38),
     String status = StatusTypes.available, int workItems = 19}){
+    //TODO: retrieve info about application from the appID
+    String appName = ApplicationNames.options[projectID];
+    
     DateTime createdTime = DateTime.now();
-    return Project._(projectID: projectID, systemID: systemID, createdTime: createdTime, updatedTime: createdTime,
-      name: name, details: details, status: status, totalHours: totalHours, workItemCount: workItems
+    return Project._(projectID: projectID, applicationID: systemID, createdTime: createdTime, updatedTime: createdTime,
+      name: name, details: details, status: status, totalHours: totalHours, workItemCount: workItems, applicationName: appName
     );
   }
 
@@ -94,15 +96,26 @@ class StatusTypes {
   static const options = ["Select an Option", assigned, available, finished, voided];
 }
 
+class ApplicationNames {
+  static const String timeManager = "Time Manager";
+  static const String jodeler = "Jodeler";
+  static const String webScraper = "Web Scraper";
+  static const String packageDrop = 'Package Drop';
+  static const String liveItUp = "Live It Up";
+  static const String dataStructures = "Data Structures";
+  static const String workoutApp = "Workout App";
+  static const options = ["Select an Option", timeManager, jodeler, webScraper, packageDrop, liveItUp, dataStructures, workoutApp];
+}
+
 class Filter implements Data {
-  final int filterID;
-  final DateTime createdTime;
-  final DateTime updatedTime;
-  final String filterXML; //might not need this if the various aspects of a filter can easily be defined in fields and won't change
-  final bool isDefault;
-  final bool isDescending;
-  final String name;
-  final String status;
+  int filterID;
+  DateTime createdTime;
+  DateTime updatedTime;
+  String filterXML; //might not need this if the various aspects of a filter can easily be defined in fields and won't change
+  bool isDefault;
+  bool isDescending;
+  String name;
+  String status;
 
   Filter._({@required this.filterID, @required this.isDefault, @required this.isDescending, @required this.name,
     this.createdTime, this.updatedTime, this.filterXML, this.status});
@@ -137,15 +150,15 @@ class Filter implements Data {
 }
 
 class Application implements Data{
-  final int systemID;
-  final DateTime createdTime;
-  final DateTime updatedTime;
-  final String name;
-  final String description;
-  final String version;
-  final DateTime workStartedDate;
-  final Duration totalHours;
-  final Duration workItemsCount;
+  int systemID;
+  DateTime createdTime;
+  DateTime updatedTime;
+  String name;
+  String description;
+  String version;
+  DateTime workStartedDate;
+  Duration totalHours;
+  Duration workItemsCount;
 
   Application._({@required this.systemID, @required this.name, @required this.description, this.createdTime,
     this.updatedTime, this.version, this.workStartedDate, this.totalHours, this.workItemsCount});

@@ -32,6 +32,10 @@ dependencies:
 
   device_info: ^0.4.0+2
 
+  datetime_picker_formfield: ^0.4.2
+
+  flutter_datetime_picker: ^1.2.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

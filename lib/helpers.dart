@@ -2,16 +2,32 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:device_info/device_info.dart';
 
+const String shortDateFormatString = "MM/dd/yyyy hh:mm";
 ///Formats the given DateTime into a string consisting of MM/dd/yyyy hh:mm.
 /// See [DateFormat]
 String shortDateFormat(DateTime dateTime){
-  return DateFormat("MM/dd/yyyy hh:mm").format(dateTime);
+  return DateFormat(shortDateFormatString).format(dateTime);
 }
 
+const String detailedDateFormatString = "MM/dd/yyyy hh:mm a";
+///Formats the given DateTime into a string consisting of MM/dd/yyyy hh:mm a.
+/// See [DateFormat]
+String detailedDateFormat(DateTime dateTime) {
+  return DateFormat(detailedDateFormatString).format(dateTime);
+}
+
+const String longDetailedDateFormatString = "EEEE, MMMM dd, yyyy hh:mm a";
+/// Formats the given DateTime into a string consisting of EEEE, MMMM dd, yyyy hh:mm a.
+///   See [DateFormat]
+String longDetailDateFormat(DateTime dateTime){
+  return DateFormat(longDetailedDateFormatString).format(dateTime);
+}
+
+const String veryShortDateFormatString = "MM/dd/yyyy";
 /// Formats the given DateTime into a string consisting of MM/dd/yyyy.
 ///   See [DateFormat]
 String veryShortDateFormat(DateTime dateTime){
-  return DateFormat('MM/dd/yyyy').format(dateTime);
+  return DateFormat(veryShortDateFormatString).format(dateTime);
 }
 
 /// returns a [Color] converted from the given hexadecimal code representation
