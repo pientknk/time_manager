@@ -4,6 +4,7 @@ import 'package:time_manager/helpers.dart';
 import 'package:time_manager/widgets.dart';
 import 'dart:async';
 import 'package:time_manager/theme.dart';
+import 'package:time_manager/material_data.dart';
 
 class HomeTabPage extends StatefulWidget {
   HomeTabPage({
@@ -311,7 +312,24 @@ class CardRow extends StatelessWidget{
                   builder: (context) => ProjectEditScreen(project: project)));
               break;
             case 3:
-              return null;
+              ShowPopup(
+                title: 'testing',
+                buildContext: context,
+                widget: Container(
+                  child: Row(
+                    children: <Widget>[
+                      _buildRowButtonDismissPopup(
+                        context: context,
+                        buttonContents: BottomAppBarTab(text: 'Delete', icon: Icons.delete_forever),
+                      ),
+                      _buildRowButtonDismissPopup(
+                        context: context,
+                        buttonContents: BottomAppBarTab(text: 'Cancel', icon: Icons.cancel),
+                      )
+                    ],
+                  ),
+                )
+              );
           }
         },
         itemBuilder: (context) => [
@@ -323,6 +341,35 @@ class CardRow extends StatelessWidget{
         ],
       ),
     );
+  }
+
+  Expanded _buildRowButtonDismissPopup(
+    {@required BuildContext context,
+      double height = 60,
+      Color color = ThemeColors.appMain,
+      @required BottomAppBarTab buttonContents}) {
+    return Expanded(
+      child: SizedBox(
+        height: height,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(buttonContents.icon, color: color, size: 30),
+                Text(
+                  buttonContents.text,
+                  style: TextStyle(color: color),
+                )
+              ],
+            ),
+          )),
+      ));
   }
 
   Widget _buildCardRow(BuildContext context){
@@ -401,6 +448,135 @@ class CardRow extends StatelessWidget{
                     builder: (context) => ProjectDetailScreen(project))),
         child: _buildCardContents(context),
       ),
+    );
+  }
+}
+
+class ConfirmationPopupLayout extends ModalRoute<bool> {
+  ConfirmationPopupLayout({@required this.child, this.bgColor, this.top = 10, this.right = 10, this.bottom = 10, this.left = 10});
+
+  final Widget child;
+  Color bgColor;
+  double top;
+  double right;
+  double bottom;
+  double left;
+
+  @override
+  Duration get transitionDuration => Duration(milliseconds: 300);
+
+  @override
+  bool get opaque => true;
+
+  @override
+  bool get barrierDismissible => false;
+
+  @override
+  Color get barrierColor => bgColor == null ? Colors.black.withOpacity(0.5) : bgColor;
+
+  @override
+  // TODO: implement barrierLabel
+  String get barrierLabel => null;
+
+  @override
+  bool get maintainState => false;
+
+  @override
+  Widget buildTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
+    return FadeTransition(
+      opacity: animation,
+      child: ScaleTransition(
+        scale: animation,
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
+    return GestureDetector(
+      onTap: (){
+        //SystemChannels.textInput.invokeMethod('TextInput.hide');
+      },
+      child: SizedBox(
+        child: Material(
+          type: MaterialType.transparency,
+          child: SafeArea(
+            bottom: true,
+            child: _buildOverlayContent(context),
+          ),
+        ),
+      )
+    );
+  }
+
+  Widget _buildOverlayContent(BuildContext context){
+    return Container(
+      margin: EdgeInsets.only(left: this.left, top: this.top, right: this.right, bottom: this.bottom),
+      child: child,
+    );
+  }
+}
+
+class PopupContent extends StatefulWidget {
+  final Widget content;
+
+  PopupContent({
+    Key key,
+    this.content
+  }) : super(key: key);
+
+  _PopupContentState createState() => _PopupContentState();
+}
+
+class _PopupContentState extends State<PopupContent> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      child: widget.content,
+    );
+  }
+}
+
+class ShowPopup {
+  BuildContext buildContext;
+  Widget widget;
+  String title;
+  BuildContext popupContext;
+
+  ShowPopup({this.buildContext, this.widget, this.title, this.popupContext}) {
+    Navigator.push(
+      buildContext,
+      ConfirmationPopupLayout(
+        top: 60,
+        left: 40,
+        right: 40,
+        bottom: 60,
+        child: PopupContent(
+          content: AppScaffold(
+            appBarTitle: ThemeText.appBarText('Delete Project?'),
+            appBarLeading: Builder(builder: (context) {
+              return IconButton(
+                icon: Icon(Icons.cancel),
+                onPressed: () {
+                  try {
+                    Navigator.pop(context);
+                  } catch (e) { print(e.toString()); }
+                },
+              );
+            }),
+            body: Container(
+              color: ThemeColors.cardAccent,
+              child: widget,
+            ),
+          ),
+        ),
+      )
     );
   }
 }

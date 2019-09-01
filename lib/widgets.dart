@@ -71,26 +71,32 @@ class _HomePageWidgetState extends State<HomePageWidget>
 
 class AppScaffold extends StatelessWidget {
   AppScaffold(
-      {this.appBarTitle,
+      {@required this.appBarTitle,
+      @required this.body,
       this.appBarActions,
-      this.body,
+        this.appBarLeading,
       this.floatingActionButton,
-      this.bottomNavigationBar});
+      this.bottomNavigationBar,
+      this.resizeToAvoidBottomInset = false});
 
   final Widget appBarTitle;
   final List<Widget> appBarActions;
+  final Widget appBarLeading;
   final Widget body;
   final Widget floatingActionButton;
   final Widget bottomNavigationBar;
+  final bool resizeToAvoidBottomInset;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: appBarTitle,
+        leading: appBarLeading,
         backgroundColor: ThemeColors.appMain,
         actions: appBarActions,
       ),
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       body: body,
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
