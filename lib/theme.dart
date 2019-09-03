@@ -249,7 +249,7 @@ class ThemeInput {
     return _inputContainer(
       child: TextFormField(
         style: ThemeTextStyles.formText,
-        initialValue: initialValue,
+        initialValue: initialValue ?? '',
         validator: validatorFunc,
         enabled: enabled,
         maxLines: maxLines ?? 1,

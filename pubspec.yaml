@@ -36,6 +36,8 @@ dependencies:
 
   flutter_datetime_picker: ^1.2.6
 
+  fluro: ^1.5.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

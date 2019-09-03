@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:device_info/device_info.dart';
+import 'package:time_manager/data.dart';
 
 const String shortDateFormatString = "MM/dd/yyyy hh:mm";
 ///Formats the given DateTime into a string consisting of MM/dd/yyyy hh:mm.
@@ -44,4 +45,8 @@ String shortDurationFormat(Duration duration){
   String durationInHours = _ensureTwoDigits(duration.inHours);
   String durationInMinutes = _ensureTwoDigits(duration.inMinutes % 60);
   return '$durationInHours:$durationInMinutes';
+}
+
+Project getProjectByID(String id) {
+  return GetData.getProjectsMap()[id];
 }

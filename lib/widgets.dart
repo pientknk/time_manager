@@ -3,21 +3,21 @@ import 'package:flutter/cupertino.dart';
 import 'package:time_manager/tab_pages.dart';
 import 'package:time_manager/material_data.dart';
 import 'package:time_manager/data.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:time_manager/helpers.dart';
 import 'package:time_manager/theme.dart';
-import 'package:time_manager/data.dart';
+import 'package:time_manager/routing.dart';
+import 'package:fluro/fluro.dart';
 
-class HomePageWidget extends StatefulWidget {
-  HomePageWidget({Key key, this.title}) : super(key: key);
+class HomePage extends StatefulWidget {
+  HomePage({Key key, this.title}) : super(key: key);
 
   final String title;
 
   @override
-  _HomePageWidgetState createState() => _HomePageWidgetState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageWidgetState extends State<HomePageWidget>
+class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin {
   Widget _tabBodyWidget = CurrentProjectsTab();
 
@@ -46,10 +46,17 @@ class _HomePageWidgetState extends State<HomePageWidget>
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Time Manager'),
       appBarActions: <Widget>[
-        Container(
+        IconButton(
           padding: const EdgeInsets.all(5),
-          child: Icon(Icons.settings),
-        )
+          icon: Icon(Icons.settings),
+          iconSize: 30,
+          onPressed: () {
+            Routing.navigateTo(context, Routing.settingsRoute, transition: TransitionType.inFromRight);
+          },
+          splashColor: ThemeColors.highlightedData,
+          color: Colors.white,
+
+        ),
       ],
       body: _tabBodyWidget,
       floatingActionButton: FloatingActionButtonWidget(),
@@ -77,6 +84,7 @@ class AppScaffold extends StatelessWidget {
         this.appBarLeading,
       this.floatingActionButton,
       this.bottomNavigationBar,
+        this.persistentBottomSheet,
       this.resizeToAvoidBottomInset = false});
 
   final Widget appBarTitle;
@@ -85,6 +93,7 @@ class AppScaffold extends StatelessWidget {
   final Widget body;
   final Widget floatingActionButton;
   final Widget bottomNavigationBar;
+  final Widget persistentBottomSheet;
   final bool resizeToAvoidBottomInset;
 
   @override
@@ -101,6 +110,7 @@ class AppScaffold extends StatelessWidget {
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: bottomNavigationBar,
+      bottomSheet: persistentBottomSheet,
     );
   }
 }
@@ -123,7 +133,7 @@ class _FloatingActionButtonWidgetState
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: () => setState(() {
-        //push add view
+        Routing.navigateTo(context, "${Routing.projectAddRoute}/1", transition: TransitionType.inFromRight);
       }),
       tooltip: 'Add a new Work Item',
       child: Icon(
@@ -195,7 +205,7 @@ class _BottomAppBarWidgetState extends State<BottomAppBarWidget> {
       {BottomAppBarTab item, int index, ValueChanged<int> onPressed}) {
     Color color = _selectedIndex == index ? widget.selectedColor : widget.color;
     return Expanded(
-        child: SizedBox(
+      child: SizedBox(
       height: widget.height,
       child: Material(
           type: MaterialType.transparency,
@@ -217,408 +227,12 @@ class _BottomAppBarWidgetState extends State<BottomAppBarWidget> {
   }
 }
 
-///TODO: this could probably be a stateless widget since nothing on it updates while the user is looking at this screen (for now)
-class ProjectCard extends StatefulWidget {
-  ProjectCard({
-    Key key,
-    this.project,
-    //this.color,
-    //this.splashColor,
-    //this.textColor = Colors.white,
-    //this.margin,
-    //this.text
-  }) : super(key: key);
-
+class ProjectDetailPage extends StatelessWidget {
   final Project project;
 
-  //final Color color;
-  //final Color splashColor;
-  //final Color textColor;
-  //final EdgeInsetsGeometry margin;
-  //final String text;
+  ProjectDetailPage(String id) :
+    project = getProjectByID(id);
 
-  _ProjectCardState createState() => _ProjectCardState();
-}
-
-class _ProjectCardState extends State<ProjectCard> {
-  final _headerTextStyle = TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-  );
-
-  Widget _buildHeaderText(String text) {
-    return Container(
-        padding: const EdgeInsets.only(bottom: 5),
-        decoration: BoxDecoration(
-            border:
-                Border(bottom: BorderSide(color: Colors.grey[900], width: 3))),
-        child: Center(
-          child: AutoSizeText(
-            text,
-            style: _headerTextStyle,
-            maxLines: 2,
-            minFontSize: 14,
-            textAlign: TextAlign.center,
-            semanticsLabel: 'n/a',
-            overflow: TextOverflow.ellipsis,
-          ),
-        ));
-  }
-
-  final _infoTextStyle = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w300,
-    color: Colors.grey[100],
-  );
-
-  Widget _buildInfoText(String text) {
-    return Container(
-      child: AutoSizeText(
-        text,
-        style: _infoTextStyle,
-        minFontSize: 11,
-        maxLines: 4,
-        textAlign: TextAlign.center,
-        semanticsLabel: 'n/a',
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  final _labelTextStyle = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-  );
-
-  Widget _buildLabelText(String text) {
-    return Container(
-      padding: const EdgeInsets.all(1),
-      child: AutoSizeText(
-        text.toUpperCase(),
-        style: _labelTextStyle,
-        minFontSize: 10,
-        maxLines: 1,
-        semanticsLabel: 'n/a',
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  final _dataTextStyle = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w500,
-    color: Colors.green,
-  );
-
-  Widget _buildDataText(String text) {
-    return Container(
-      padding: const EdgeInsets.all(1),
-      child: AutoSizeText(
-        text,
-        style: _dataTextStyle,
-        maxLines: 1,
-        minFontSize: 11,
-        semanticsLabel: 'n/a',
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  //longest project name allowed: 50
-  Widget _buildProjectName() {
-    return Expanded(flex: 0, child: _buildHeaderText(widget.project.name));
-  }
-
-  Widget _buildProjectName2() {
-    return Expanded(
-        flex: 1,
-        child: Container(
-            padding: const EdgeInsets.only(bottom: 5),
-            decoration: BoxDecoration(
-                border: Border(
-                    bottom: BorderSide(color: Colors.grey[900], width: 3))),
-            child: Center(
-              child: AutoSizeText(
-                widget.project.name,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                maxLines: 3,
-                minFontSize: 16,
-                textAlign: TextAlign.center,
-                semanticsLabel: 'n/a',
-                overflow: TextOverflow.ellipsis,
-              ),
-            )));
-  }
-
-  //longest project description allowed: 120 chars
-  Widget _buildProjectDescription() {
-    return Expanded(flex: 0, child: _buildInfoText(widget.project.details));
-  }
-
-  Widget _buildHoursAndWorkItemsColumn() {
-    return Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        textDirection: TextDirection.ltr,
-        children: <Widget>[
-          Expanded(
-            child: _buildProjectColumn(
-                'Hours', shortDurationFormat(widget.project.totalHours)),
-          ),
-          Expanded(
-            child: _buildProjectColumn(
-                'Items', widget.project.workItemCount.toString()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHoursAndWorkItemsColumn2() {
-    return Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        textDirection: TextDirection.ltr,
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              verticalDirection: VerticalDirection.down,
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Flex(
-                  direction: Axis.vertical,
-                  children: <Widget>[
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      child: AutoSizeText(
-                        'HOURS:',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        minFontSize: 13,
-                        maxLines: 1,
-                        semanticsLabel: 'n/a',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      child: AutoSizeText(
-                        shortDurationFormat(widget.project.totalHours),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.green,
-                        ),
-                        maxLines: 1,
-                        minFontSize: 14,
-                        semanticsLabel: 'n/a',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    )
-                  ],
-                )
-              ],
-            ),
-          ),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              verticalDirection: VerticalDirection.down,
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Flex(
-                  direction: Axis.vertical,
-                  children: <Widget>[
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      child: AutoSizeText(
-                        'ITEMS:',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        minFontSize: 13,
-                        maxLines: 1,
-                        semanticsLabel: 'n/a',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      child: AutoSizeText(
-                        widget.project.workItemCount.toString(),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.green,
-                        ),
-                        maxLines: 1,
-                        minFontSize: 14,
-                        semanticsLabel: 'n/a',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    )
-                  ],
-                )
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProjectColumn(String label, String dataText) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      verticalDirection: VerticalDirection.down,
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        Flex(
-          direction: Axis.vertical,
-          children: <Widget>[_buildLabelText(label), _buildDataText(dataText)],
-        )
-      ],
-    );
-  }
-
-  Widget _buildProjectRow(String label, String dataText) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Flex(
-          direction: Axis.horizontal,
-          children: <Widget>[
-            _buildLabelText('$label:'),
-            _buildDataText(dataText),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _buildProjectRow2() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Flex(
-          direction: Axis.horizontal,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(2),
-              child: AutoSizeText(
-                'STARTED:',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-                minFontSize: 13,
-                maxLines: 1,
-                semanticsLabel: 'n/a',
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(2),
-              child: AutoSizeText(
-                veryShortDateFormat(widget.project.startedTime),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.green,
-                ),
-                maxLines: 1,
-                minFontSize: 14,
-                semanticsLabel: 'n/a',
-                overflow: TextOverflow.ellipsis,
-              ),
-            )
-          ],
-        )
-      ],
-    );
-  }
-
-  List<Widget> _getCard1() {
-    return [
-      _buildProjectName(),
-      _buildProjectDescription(),
-      _buildHoursAndWorkItemsColumn(),
-      _buildProjectRow(
-          'Started', veryShortDateFormat(widget.project.startedTime)),
-      _buildProjectRow('Finished', veryShortDateFormat(DateTime(2019, 10, 27))),
-    ];
-  }
-
-  List<Widget> _getCard2() {
-    return [
-      _buildProjectName2(),
-      _buildHoursAndWorkItemsColumn2(),
-      _buildProjectRow2(),
-    ];
-  }
-
-  Widget _buildCard() {
-    return Flex(
-      direction: Axis.vertical,
-      children: <Widget>[
-        Expanded(
-            child: Container(
-          padding: const EdgeInsets.all(3),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            verticalDirection: VerticalDirection.down,
-            mainAxisSize: MainAxisSize.min,
-            children: _getCard2(),
-          ),
-        ))
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          child: _buildCard(),
-          //splashColor: widget.splashColor,
-        ),
-      ),
-      color: Colors.grey[850],
-      margin: const EdgeInsets.all(2.5),
-      elevation: 5.0,
-    );
-  }
-}
-
-class ProjectDetailScreen extends StatefulWidget {
-  final Project project;
-
-  ProjectDetailScreen(this.project);
-
-  _ProjectDetailScreenState createState() => _ProjectDetailScreenState();
-}
-
-class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   final _formKey = GlobalKey<FormState>();
 
   Widget _buildProjectForm(BuildContext context) {
@@ -630,36 +244,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             ThemeForm.buildFormFieldDropdown(
               enabled: false,
               labelText: 'application',
-              value: widget.project.applicationName,
+              value: project.applicationName,
               options: ApplicationNames.options,
-              onChangedFunc: (String value) {
-                setState(() {
-                  widget.project.applicationName = value;
-                });
-              }
             ),
             ThemeForm.buildFormFieldDropdown(
               enabled: false,
               labelText: 'status',
-              value: widget.project.status,
+              value: project.status,
               options: StatusTypes.options,
-              onChangedFunc: (String value){
-                setState(() {
-                  widget.project.status = value;
-                });
-              }
             ),
           ]
         ),
         ThemeInput.textFormField(
           enabled: false,
           label: 'Name',
-          initialValue: widget.project.name,
+          initialValue: project.name,
         ),
         ThemeInput.textFormField(
           enabled: false,
           label: 'Details',
-          initialValue: widget.project.details,
+          initialValue: project.details,
           maxLines: 2,
         ),
         ThemeInput.dateTimeField(
@@ -675,13 +279,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ThemeForm.buildFormRowFromFields(
           children: <Widget>[
             ThemeInput.intFormField(
-              initialValue: widget.project.workItemCount.toString(),
+              initialValue: project.workItemCount.toString(),
               enabled: false,
               label: 'work items',
             ),
             ThemeInput.textFormField(
               label: 'total hours',
-              initialValue: shortDurationFormat(widget.project.totalHours),
+              initialValue: shortDurationFormat(project.totalHours),
               enabled: false,
             ),
           ]
@@ -717,15 +321,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 }
 
-class ProjectEditScreen extends StatefulWidget {
-  ProjectEditScreen({Key key, this.project}) : super(key: key);
-
+class ProjectEditPage extends StatefulWidget {
   final Project project;
 
-  _ProjectEditScreenState createState() => _ProjectEditScreenState();
+  ProjectEditPage(String id) :
+    project = getProjectByID(id);
+
+  _ProjectEditPageState createState() => _ProjectEditPageState();
 }
 
-class _ProjectEditScreenState extends State<ProjectEditScreen> {
+class _ProjectEditPageState extends State<ProjectEditPage> {
   @override
   void initState() {
     super.initState();
@@ -827,6 +432,189 @@ class _ProjectEditScreenState extends State<ProjectEditScreen> {
         )
       ],
       body: _buildContents(context),
+    );
+  }
+}
+
+class SettingsPage extends StatefulWidget {
+  _SettingsPageState createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  Settings settings;
+  @override
+  void initState() {
+    //TODO: set fields on settings
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      appBarTitle: ThemeText.appBarText('Settings'),
+      appBarActions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.settings_backup_restore),
+          iconSize: 30,
+          padding: const EdgeInsets.all(5),
+          onPressed: () {
+            //reset settings
+          },
+          color: Colors.white,
+          tooltip: 'Restores Settings to default',
+        )
+      ],
+      body: Container(
+        color: Colors.black,
+        height: 200,
+      ),
+    );
+  }
+}
+
+class ProjectAddPage extends StatefulWidget {
+  final Project project;
+
+  ProjectAddPage(String applicationID):
+    project = Project.newProject(applicationID: 1);
+
+  _ProjectAddPageState createState() => _ProjectAddPageState();
+}
+
+class _ProjectAddPageState extends State<ProjectAddPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  final _formKey = GlobalKey<FormState>();
+
+  Widget _getEditForm(BuildContext context) {
+    return ThemeForm.buildForm(
+      formKey: _formKey,
+      listViewChildren: <Widget>[
+        ThemeForm.buildFormRowFromFields(
+          children: <Widget>[
+            ThemeForm.buildFormFieldDropdown(
+              labelText: 'application',
+              value: ApplicationNames.options[0],
+              options: ApplicationNames.options,
+              onChangedFunc: (String value) {
+                setState(() {
+                  widget.project.applicationName = value;
+                });
+              }
+            ),
+            ThemeForm.buildFormFieldDropdown(
+              labelText: 'status',
+              value: StatusTypes.options[0],
+              options: StatusTypes.options,
+              onChangedFunc: (String value){
+                setState(() {
+                  widget.project.status = value;
+                });
+              }
+            ),
+          ]
+        ),
+        ThemeInput.textFormField(
+          label: 'Name',
+          validatorFunc: (val) {
+            return null;
+          }
+        ),
+        ThemeInput.textFormField(
+          label: 'Details',
+          maxLines: 2,
+          validatorFunc: (val) {
+            return null;
+          }),
+        ThemeInput.dateTimeField(
+          context: context,
+          label: 'started',
+        ),
+        ThemeInput.dateTimeField(
+          context: context,
+          label: 'completed',
+        ),
+        ThemeForm.buildFormRowFromFields(
+          children: <Widget>[
+            ThemeInput.intFormField(
+              initialValue: "0",
+              enabled: false,
+              label: 'work items',
+            ),
+            ThemeInput.textFormField(
+              label: 'total hours',
+              initialValue: "0",
+              enabled: false,
+            ),
+          ]
+        ),
+      ]
+    );
+  }
+
+  Widget _buildContents(BuildContext context) {
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: _getEditForm(context),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      appBarTitle: ThemeText.appBarText('Add Project'),
+      appBarActions: <Widget>[
+        IconButton(
+          padding: const EdgeInsets.all(5),
+          icon: Icon(Icons.add_box),
+          iconSize: 30,
+          splashColor: ThemeColors.highlightedData,
+          color: Colors.white,
+          onPressed: (){
+            //do something
+          },
+        )
+      ],
+      body: _buildContents(context),
+      persistentBottomSheet: Row(
+        children: <Widget>[
+          Expanded(
+            child: SizedBox(
+              height: 75,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                color: ThemeColors.appMain,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    onTap: () {
+
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.add, color: ThemeColors.highlightedData, size: 40),
+                        Text('ADD',
+                          style: TextStyle(
+                            color: ThemeColors.highlightedData,
+                            fontSize: 35,
+                            fontWeight: FontWeight.bold,
+                          )
+                        )
+                      ],
+                    ),
+                  )
+                ),
+              )
+            ),
+          )
+        ],
+      )
     );
   }
 }

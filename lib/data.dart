@@ -61,6 +61,11 @@ class Project implements Data {
   Duration totalHours;
   int workItemCount;
 
+  Project.newProject({@required this.applicationID}){
+    DateTime createdTime = DateTime.now();
+    this.createdTime = createdTime;
+  }
+
   Project._({@required this.projectID, @required this.applicationID, @required this.name, @required this.details, @required this.status,
     this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime, this.applicationName});
 
@@ -206,6 +211,15 @@ class GetData{
       Filter(2, 'Available', true, false, status: StatusTypes.available),
       Filter(3, 'Completed', true, true, status: StatusTypes.finished),
     ];
+  }
+
+  static Map<String, Project> getProjectsMap(){
+    Map<String, Project> projectMap = Map<String, Project>();
+    getProjects().forEach((proj) {
+      projectMap[proj.projectID.toString()] = proj;
+    });
+
+    return projectMap;
   }
 
   static Iterable<Project> getProjects(){

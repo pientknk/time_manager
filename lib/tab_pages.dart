@@ -5,6 +5,8 @@ import 'package:time_manager/widgets.dart';
 import 'dart:async';
 import 'package:time_manager/theme.dart';
 import 'package:time_manager/material_data.dart';
+import 'package:time_manager/routing.dart';
+import 'package:fluro/fluro.dart';
 
 class HomeTabPage extends StatefulWidget {
   HomeTabPage({
@@ -84,62 +86,12 @@ class CurrentProjectsTab extends StatefulWidget {
 }
 
 class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
-  static Iterable<ProjectCard> _createProjectCards(Iterable<Project> projects) sync* {
-    for(Project project in projects){
-      yield ProjectCard(project: project);
-    }
-  }
-
   static final _projects = GetData.getProjects().toList(growable: false);
   static final _filters = GetData.getFilters().toList(growable: false);
 
-  static final _projectCards = _createProjectCards(_projects).toList(growable: false);
-
-  //eventually i will care that we are loading all cards right away, need to update to load a set number and then add more dynamically
-  Widget _buildProjectCards() {
-    final _gridViewOption = Container(
-      color: ThemeColors.appMain,
-      child: SafeArea(
-        top: true,
-        bottom: true,
-        child: GridView.builder(
-          itemCount: _projectCards.length,
-          padding: const EdgeInsets.all(4),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 4,
-            mainAxisSpacing: 4
-          ),
-          itemBuilder: (BuildContext context, int index){
-//        final i = index ~/ 2; //2 cards per row so don't load more unless we hit past this
-//        if(i > _projectCards.length){
-//          _projectCards.addAll()
-//        }
-            return new GestureDetector(
-              child: _projectCards[index],
-              onTap: () {
-                print("I've been tapped");
-              },
-            );
-          },
-        ),
-      ),
-    );
-
-    final _listViewOption = TabWidgets.buildProjectListView(_projects, _filters[0]);
-
-    //TODO: update this to change the card theme for now, but this should be easier to do in the application at some point
-    int index = 1;
-    if(index == 0){
-      return _gridViewOption;
-    } else{
-      return _listViewOption;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return _buildProjectCards();
+    return TabWidgets.buildProjectListView(_projects, _filters[0]);
   }
 }
 
@@ -302,14 +254,10 @@ class CardRow extends StatelessWidget{
         onSelected: (value) {
           switch(value){
             case 1:
-              Navigator.push(context,
-                MaterialPageRoute(
-                  builder: (context) => ProjectDetailScreen(project)));
+              Routing.navigateTo(context, "${Routing.projectDetailRoute}/${project.projectID}", transition: TransitionType.fadeIn);
               break;
             case 2:
-              Navigator.push(context,
-                MaterialPageRoute(
-                  builder: (context) => ProjectEditScreen(project: project)));
+              Routing.navigateTo(context, "${Routing.projectEditRoute}/${project.projectID}", transition: TransitionType.fadeIn);
               break;
             case 3:
               ShowPopup(
@@ -319,12 +267,18 @@ class CardRow extends StatelessWidget{
                   child: Row(
                     children: <Widget>[
                       _buildRowButtonDismissPopup(
-                        context: context,
                         buttonContents: BottomAppBarTab(text: 'Delete', icon: Icons.delete_forever),
+                        onTapFunc: () {
+                          print('deleting project at some point');
+                          Navigator.pop(context);
+                        }
                       ),
                       _buildRowButtonDismissPopup(
-                        context: context,
                         buttonContents: BottomAppBarTab(text: 'Cancel', icon: Icons.cancel),
+                        onTapFunc: () {
+                          print('cancelling the delete');
+                          Navigator.pop(context);
+                        }
                       )
                     ],
                   ),
@@ -344,19 +298,18 @@ class CardRow extends StatelessWidget{
   }
 
   Expanded _buildRowButtonDismissPopup(
-    {@required BuildContext context,
-      double height = 60,
+    {double height = 60,
       Color color = ThemeColors.appMain,
-      @required BottomAppBarTab buttonContents}) {
+      @required BottomAppBarTab buttonContents,
+      GestureTapCallback onTapFunc}) {
     return Expanded(
       child: SizedBox(
         height: height,
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
-            onTap: () {
-              Navigator.pop(context);
-            },
+            splashColor: ThemeColors.highlightedData,
+            onTap: onTapFunc,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -397,13 +350,6 @@ class CardRow extends StatelessWidget{
             child: Column(
               children: <Widget>[
                 _buildProjectPopUpMenu(context)
-                /*GestureDetector(
-                  child: Icon(Icons.more_vert, color: Colors.white, size: 26),
-                  onTap: () => _buildProjectPopUpMenu(context)
-                      //Navigator.push(context,
-                      //MaterialPageRoute(
-                       //   builder: (context) => AppScaffold(appBarTitle: Text('hi'), body: Container(), ))),
-                ),*/
               ],
             ),
           ),
@@ -442,10 +388,9 @@ class CardRow extends StatelessWidget{
       height: 120,
       margin: const EdgeInsets.only(top: 16, bottom: 8),
       child: FlatButton(
-        onPressed: () =>
-            Navigator.push(context,
-                MaterialPageRoute(
-                    builder: (context) => ProjectDetailScreen(project))),
+        onPressed: () {
+          Routing.navigateTo(context, "${Routing.projectDetailRoute}/${project.projectID}", transition: TransitionType.fadeIn);
+        },
         child: _buildCardContents(context),
       ),
     );
@@ -550,6 +495,8 @@ class ShowPopup {
   BuildContext popupContext;
 
   ShowPopup({this.buildContext, this.widget, this.title, this.popupContext}) {
+    ///TODO: try and use routing for navigation here
+    //Routing.navigateTo(buildContext, route, transition: TransitionType.fadeIn);
     Navigator.push(
       buildContext,
       ConfirmationPopupLayout(
@@ -562,6 +509,7 @@ class ShowPopup {
             appBarTitle: ThemeText.appBarText('Delete Project?'),
             appBarLeading: Builder(builder: (context) {
               return IconButton(
+                color: Colors.white,
                 icon: Icon(Icons.cancel),
                 onPressed: () {
                   try {
@@ -572,7 +520,9 @@ class ShowPopup {
             }),
             body: Container(
               color: ThemeColors.cardAccent,
-              child: widget,
+              child: SizedBox.expand(
+                child: widget,
+              ),
             ),
           ),
         ),

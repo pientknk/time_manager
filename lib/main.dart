@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:time_manager/widgets.dart';
+import 'package:time_manager/routing.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  //setup before running the app
+  Routing.initRoutes();
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -14,7 +20,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Livvic',
       ),
       ///can't have an InitialRoute and a home property
-      home: HomePageWidget(title: 'Time Manager')
+      home: HomePage(title: 'Time Manager')
     );
   }
 }
