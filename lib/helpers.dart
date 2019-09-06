@@ -17,6 +17,11 @@ String detailedDateFormat(DateTime dateTime) {
   return DateFormat(detailedDateFormatString).format(dateTime);
 }
 
+const String detailedDateFormatWithSecondsString = "MM/dd/yyyy hh:mm:ss a";
+String detailedDateFormatWithSeconds(DateTime dateTime) {
+  return DateFormat(detailedDateFormatWithSecondsString).format(dateTime);
+}
+
 const String longDetailedDateFormatString = "EEEE, MMMM dd, yyyy hh:mm a";
 /// Formats the given DateTime into a string consisting of EEEE, MMMM dd, yyyy hh:mm a.
 ///   See [DateFormat]
@@ -38,15 +43,28 @@ Color hexToColor(String code){
 
 /// Formats the given [Duration] to a String representation of hh:mm
 String shortDurationFormat(Duration duration){
-  String _ensureTwoDigits(int amount){
-    return amount > 10 ? '$amount' : '0$amount';
-  }
-
   String durationInHours = _ensureTwoDigits(duration.inHours);
   String durationInMinutes = _ensureTwoDigits(duration.inMinutes % 60);
+
   return '$durationInHours:$durationInMinutes';
+}
+
+String longDurationFormat(Duration duration){
+  String durationInHours = _ensureTwoDigits(duration.inHours);
+  String durationInMinutes = _ensureTwoDigits(duration.inMinutes % 60);
+  String durationInSeconds = _ensureTwoDigits(duration.inSeconds % 60);
+
+  return '$durationInHours:$durationInMinutes:$durationInSeconds';
+}
+
+String _ensureTwoDigits(int amount){
+  return amount >= 10 ? '$amount' : '0$amount';
 }
 
 Project getProjectByID(String id) {
   return GetData.getProjectsMap()[id];
+}
+
+WorkItem getWorkItemByID(String id) {
+  return GetData.getWorkItemsMap()[id];
 }

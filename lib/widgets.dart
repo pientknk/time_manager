@@ -7,6 +7,8 @@ import 'package:time_manager/helpers.dart';
 import 'package:time_manager/theme.dart';
 import 'package:time_manager/routing.dart';
 import 'package:fluro/fluro.dart';
+import 'dart:async';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -55,11 +57,13 @@ class _HomePageState extends State<HomePage>
           },
           splashColor: ThemeColors.highlightedData,
           color: Colors.white,
-
         ),
       ],
       body: _tabBodyWidget,
-      floatingActionButton: FloatingActionButtonWidget(),
+      floatingActionButton: FloatingActionButtonWidget(
+        route: "${Routing.projectAddRoute}/1",
+        tooltip: 'Add a Project',
+      ),
       bottomNavigationBar: BottomAppBarWidget(
         color: ThemeColors.unselectedButtonColor,
         selectedColor: ThemeColors.highlightedData,
@@ -83,6 +87,7 @@ class AppScaffold extends StatelessWidget {
       this.appBarActions,
         this.appBarLeading,
       this.floatingActionButton,
+        this.floatingActionButtonLocation = FloatingActionButtonLocation.endFloat,
       this.bottomNavigationBar,
         this.persistentBottomSheet,
       this.resizeToAvoidBottomInset = false});
@@ -92,6 +97,7 @@ class AppScaffold extends StatelessWidget {
   final Widget appBarLeading;
   final Widget body;
   final Widget floatingActionButton;
+  final FloatingActionButtonLocation floatingActionButtonLocation;
   final Widget bottomNavigationBar;
   final Widget persistentBottomSheet;
   final bool resizeToAvoidBottomInset;
@@ -108,7 +114,7 @@ class AppScaffold extends StatelessWidget {
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       body: body,
       floatingActionButton: floatingActionButton,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: floatingActionButtonLocation,
       bottomNavigationBar: bottomNavigationBar,
       bottomSheet: persistentBottomSheet,
     );
@@ -116,9 +122,12 @@ class AppScaffold extends StatelessWidget {
 }
 
 class FloatingActionButtonWidget extends StatefulWidget {
-  FloatingActionButtonWidget({Key key}) : super(key: key);
+  FloatingActionButtonWidget({Key key, @required this.route, this.tooltip}) : super(key: key);
 
-  //combine this with a bottom navigation bar is a bottomAppBar for a notch in the bottom bar
+  final String route;
+  final String tooltip;
+
+  //combine this with a bottom navigation bar in a bottomAppBar for a notch in the bottom bar
   final floatingActionButtonLocation =
       FloatingActionButtonLocation.centerDocked;
 
@@ -133,9 +142,9 @@ class _FloatingActionButtonWidgetState
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: () => setState(() {
-        Routing.navigateTo(context, "${Routing.projectAddRoute}/1", transition: TransitionType.inFromRight);
+        Routing.navigateTo(context, widget.route, transition: TransitionType.inFromRight);
       }),
-      tooltip: 'Add a new Work Item',
+      tooltip: widget.tooltip,
       child: Icon(
         Icons.add,
         size: 27,
@@ -307,16 +316,26 @@ class ProjectDetailPage extends StatelessWidget {
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Project Details'),
       appBarActions: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(5),
-          child: Icon(Icons.edit),
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.edit,
+          onPressedFunc: () {
+            Routing.navigateTo(context, "${Routing.projectEditRoute}/${project.projectID}");
+          }
         ),
-        Container(
-          padding: const EdgeInsets.all(5),
-          child: Icon(Icons.delete_forever),
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.delete_forever,
+          onPressedFunc: () {
+            Navigator.pop(context);
+            //delete it I guess?
+          }
         ),
       ],
       body: _buildAppBody(context),
+      floatingActionButton: FloatingActionButtonWidget(
+        route: "${Routing.workItemAddRoute}/${project.projectID}",
+        tooltip: 'Add a Work Item',
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
@@ -426,9 +445,15 @@ class _ProjectEditPageState extends State<ProjectEditPage> {
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Edit Project'),
       appBarActions: <Widget>[
-        Container(
+        IconButton(
           padding: const EdgeInsets.all(5),
-          child: Icon(Icons.delete_forever),
+          icon: Icon(Icons.delete_forever),
+          iconSize: 30,
+          color: Colors.white,
+          splashColor: ThemeColors.highlightedData,
+          onPressed: () {
+            Navigator.pop(context);
+          },
         )
       ],
       body: _buildContents(context),
@@ -580,41 +605,466 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
         )
       ],
       body: _buildContents(context),
-      persistentBottomSheet: Row(
+      persistentBottomSheet: ScaffoldBottomSheet(
+        iconData: Icons.add,
+        iconText: 'add',
+        onTapFunc: () {
+
+        }
+      )
+    );
+  }
+}
+
+class ScaffoldBottomSheet extends StatelessWidget {
+  final IconData iconData;
+  final String iconText;
+  final double height;
+  final GestureTapCallback onTapFunc;
+
+  ScaffoldBottomSheet({@required this.iconData, @required this.iconText, this.height = 70, this.onTapFunc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: SizedBox(
+            height: height,
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              color: ThemeColors.appMain,
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: onTapFunc,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(iconData, color: ThemeColors.highlightedData, size: 40),
+                      Text(iconText.toUpperCase(),
+                        style: TextStyle(
+                          color: ThemeColors.highlightedData,
+                          fontSize: 35,
+                          fontWeight: FontWeight.bold,
+                        )
+                      )
+                    ],
+                  ),
+                )
+              ),
+            )
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class WorkItemAddPage extends StatefulWidget {
+  final Project project;
+
+  WorkItemAddPage(String id) :
+    project = getProjectByID(id);
+
+  _WorkItemAddPageState createState() => _WorkItemAddPageState();
+}
+
+class _WorkItemAddPageState extends State<WorkItemAddPage> {
+  WorkItem workItem;
+  final _formKey = GlobalKey<FormState>();
+  Timer _timer;
+  Duration duration = Duration();
+  TextEditingController endTimeController;
+
+  @override
+  void initState() {
+    startTimer();
+    workItem = WorkItem.newWorkItem(projectID: widget.project.projectID);
+    endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.endTime));
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      appBarTitle: ThemeText.appBarText('add work item'),
+      appBarActions: <Widget>[
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.add_box,
+          onPressedFunc: () {
+            Navigator.pop(context);
+            //delete it I guess?
+          }
+        ),
+      ],
+      body: _buildContents(context),
+      persistentBottomSheet: ScaffoldBottomSheet(
+        iconData: Icons.add,
+        iconText: 'add',
+      ),
+    );
+  }
+
+  Widget _buildContents(BuildContext context){
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Column(
         children: <Widget>[
           Expanded(
-            child: SizedBox(
-              height: 75,
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                color: ThemeColors.appMain,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: () {
-
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.add, color: ThemeColors.highlightedData, size: 40),
-                        Text('ADD',
-                          style: TextStyle(
-                            color: ThemeColors.highlightedData,
-                            fontSize: 35,
-                            fontWeight: FontWeight.bold,
-                          )
-                        )
-                      ],
-                    ),
-                  )
+            flex: 1,
+            child: Container(
+              color: ThemeColors.card,
+              child: Center(
+                child: Text(longDurationFormat(duration), //need to find way to stop text from moving around with different text inputs of various width
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 75,
+                    fontFamily: ThemeTextStyles.mainFont
+                  ),
                 ),
-              )
+              ),
             ),
+          ),
+          Expanded(
+            flex: 4,
+            child: ThemeForm.buildForm(
+              formKey: _formKey,
+              listViewChildren: <Widget>[
+                ThemeInput.textFormField(
+                  label: 'Project',
+                  enabled: false,
+                  initialValue: widget.project.name,
+                  maxLines: 1
+                ),
+                ThemeInput.textFormField(
+                  label: 'Summary',
+                  validatorFunc: (val) {
+                    return null;
+                  },
+                ),
+                ThemeInput.textFormField(
+                  label: 'Details',
+                  maxLines: 2,
+                  validatorFunc: (val) {
+                    return null;
+                  }
+                ),
+                ThemeInput.dateTimeField(
+                  originalValue: workItem.startTime,
+                  format: DateFormat(detailedDateFormatWithSecondsString),
+                  enabled: false,
+                  context: context,
+                  label: 'started',
+                ),
+                ThemeInput.dateTimeField(
+                  textEditingController: endTimeController,
+                  format: DateFormat(detailedDateFormatWithSecondsString),
+                  enabled: false,
+                  context: context,
+                  label: 'ended',
+                ),
+              ],
+            ),
+          )
+        ]
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    endTimeController.dispose();
+    super.dispose();
+  }
+
+  void startTimer() {
+    const oneSec = const Duration(seconds: 1);
+    _timer = Timer.periodic(
+      oneSec,
+      (Timer timer) => setState((){
+        workItem.endTime = DateTime.now();
+        endTimeController.text = detailedDateFormatWithSeconds(workItem.endTime);
+        duration = workItem.endTime.difference(workItem.startTime);
+      })
+    );
+  }
+}
+
+class WorkItemDetailPage extends StatefulWidget {
+  final WorkItem workItem;
+
+  WorkItemDetailPage(String id) :
+    workItem = getWorkItemByID(id);
+
+  _WorkItemDetailPageState createState() => _WorkItemDetailPageState();
+  
+}
+
+class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
+  final _formKey = GlobalKey<FormState>();
+  Project project;
+
+  @override
+  void initState() {
+    project = getProjectByID(widget.workItem.projectID.toString());
+    super.initState();
+  }
+
+  Widget _buildWorkItemForm(BuildContext context) {
+    return ThemeForm.buildForm(
+      formKey: _formKey,
+      listViewChildren: <Widget>[
+        ThemeInput.textFormField(
+          label: 'Project',
+          enabled: false,
+          initialValue: project.name,
+          maxLines: 1
+        ),
+        ThemeInput.textFormField(
+          enabled: false,
+          label: 'Summary',
+          initialValue: widget.workItem.summary,
+        ),
+        ThemeInput.textFormField(
+          enabled: false,
+          label: 'Details',
+          initialValue: widget.workItem.details,
+          maxLines: 2,
+        ),
+        ThemeInput.dateTimeField(
+          enabled: false,
+          originalValue: widget.workItem.startTime,
+          format: DateFormat(detailedDateFormatWithSecondsString),
+          context: context,
+          label: 'started',
+        ),
+        ThemeInput.dateTimeField(
+          enabled: false,
+          originalValue: widget.workItem.endTime,
+          format: DateFormat(detailedDateFormatWithSecondsString),
+          context: context,
+          label: 'ended',
+        ),
+      ]
+    );
+  }
+
+  Widget _buildAppBody(BuildContext context) {
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: ThemeColors.card,
+              child: Center(
+                child: Text(longDurationFormat(widget.workItem.endTime.difference(widget.workItem.startTime)), //need to find way to stop text from moving around with different text inputs of various width
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 75,
+                    fontFamily: ThemeTextStyles.mainFont
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: _buildWorkItemForm(context),
           )
         ],
       )
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    project = getProjectByID(widget.workItem.projectID.toString());
+    return AppScaffold(
+      appBarTitle: ThemeText.appBarText('Work Item Details'),
+      appBarActions: <Widget>[
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.edit,
+          onPressedFunc: () {
+            Routing.navigateTo(context, "${Routing.workItemEditRoute}/${widget.workItem.workItemID}");
+          }
+        ),
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.delete_forever,
+          onPressedFunc: () {
+            Navigator.pop(context);
+            //delete it I guess?
+          }
+        ),
+      ],
+      body: _buildAppBody(context),
+    );
+  }
+}
+
+class WorkItemEditPage extends StatefulWidget {
+  final WorkItem workItem;
+
+  WorkItemEditPage(String id) :
+    workItem = getWorkItemByID(id);
+
+  _WorkItemEditPageState createState() => _WorkItemEditPageState();
+}
+
+class _WorkItemEditPageState extends State<WorkItemEditPage> {
+  final _formKey = GlobalKey<FormState>();
+  Project project;
+  Duration duration;
+
+  @override
+  void initState() {
+    project = getProjectByID(widget.workItem.projectID.toString());
+    duration = widget.workItem.endTime.difference(widget.workItem.startTime);
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      appBarTitle: ThemeText.appBarText('add work item'),
+      appBarActions: <Widget>[
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.delete_forever,
+          onPressedFunc: () {
+            Navigator.pop(context);
+            //delete it I guess?
+          }
+        ),
+      ],
+      body: _buildContents(context),
+      persistentBottomSheet: ScaffoldBottomSheet(
+        iconData: Icons.check_circle_outline,
+        iconText: 'update',
+      ),
+    );
+  }
+
+  Widget _buildContents(BuildContext context){
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            flex: 1,
+            child: Container(
+              color: ThemeColors.card,
+              child: Center(
+                child: Text(longDurationFormat(duration), //need to find way to stop text from moving around with different text inputs of various width
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 75,
+                    fontFamily: ThemeTextStyles.mainFont
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: ThemeForm.buildForm(
+              formKey: _formKey,
+              listViewChildren: <Widget>[
+                ThemeInput.textFormField(
+                  label: 'Project',
+                  enabled: false,
+                  initialValue: project.name,
+                  maxLines: 1
+                ),
+                ThemeInput.textFormField(
+                  label: 'Summary',
+                  initialValue: widget.workItem.summary,
+                  validatorFunc: (val) {
+                    return null;
+                  },
+                ),
+                ThemeInput.textFormField(
+                  label: 'Details',
+                  maxLines: 2,
+                  initialValue: widget.workItem.details,
+                  validatorFunc: (val) {
+                    return null;
+                  }
+                ),
+                ThemeInput.dateTimeField(
+                  originalValue: widget.workItem.startTime,
+                  format: DateFormat(detailedDateFormatWithSecondsString),
+                  context: context,
+                  label: 'started',
+                ),
+                ThemeInput.dateTimeField(
+                  originalValue: widget.workItem.endTime,
+                  format: DateFormat(detailedDateFormatWithSecondsString),
+                  context: context,
+                  label: 'ended',
+                ),
+              ],
+            ),
+          )
+        ]
+      ),
+    );
+  }
+}
+
+class WorkItemForm extends StatefulWidget {
+  final GlobalKey<FormState> formKey;
+  final bool enabled;
+  final WorkItem workItem;
+  
+  WorkItemForm({@required this.workItem, @required this.formKey, this.enabled = true});
+
+  _WorkItemFormState createState() => _WorkItemFormState();
+}
+
+class _WorkItemFormState extends State<WorkItemForm> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return ThemeForm.buildForm(
+      formKey: widget.formKey,
+      listViewChildren: <Widget>[
+        ThemeInput.textFormField(
+          enabled: widget.enabled,
+          label: 'Summary',
+          initialValue: widget.workItem.summary,
+        ),
+        ThemeInput.textFormField(
+          enabled: false,
+          label: 'Details',
+          initialValue: widget.workItem.details,
+          maxLines: 2,
+        ),
+        ThemeInput.dateTimeField(
+          enabled: false,
+          context: context,
+          label: 'started',
+        ),
+        ThemeInput.dateTimeField(
+          enabled: false,
+          context: context,
+          label: 'completed',
+        ),
+      ]
     );
   }
 }

@@ -12,15 +12,20 @@ class WorkItem implements Data{
   String details;
   Duration duration;
 
+  WorkItem.newWorkItem({@required this.projectID}){
+    DateTime now = DateTime.now();
+    this.createdTime = now;
+    this.startTime = now;
+    this.endTime = now;
+  }
+
   WorkItem._({@required this.workItemID, @required this.startTime, @required this.projectID, @required this.summary,
     @required this.details, this.createdTime, this.updatedTime, this.endTime, this.duration});
 
   factory WorkItem(int workItemID, int projectID, String summary, String details){
     DateTime createdTime = DateTime.now();
-    Duration duration = Duration(hours: 2, minutes: 12);
-    DateTime endTime = createdTime.add(duration);
     return WorkItem._(workItemID: 1, startTime: createdTime, projectID: 1, summary: summary, details: summary, createdTime: createdTime,
-      updatedTime: createdTime, duration: duration, endTime: endTime);
+      updatedTime: createdTime, endTime: createdTime);
   }
 
   WorkItem.fromWorkItem(WorkItem workItem) :
@@ -195,6 +200,15 @@ class Settings {
 
 class GetData{
   const GetData();
+
+  static Map<String, WorkItem> getWorkItemsMap(){
+    Map<String, WorkItem> workItemMap = Map<String, WorkItem>();
+    getWorkItems().forEach((item) {
+      workItemMap[item.workItemID.toString()] = item;
+    });
+
+    return workItemMap;
+  }
 
   static Iterable<WorkItem> getWorkItems(){
     return [

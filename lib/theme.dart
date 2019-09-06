@@ -176,14 +176,17 @@ class ThemeInput {
     );
   }
 
-  static Container dateTimeField({BuildContext context, DateFormat format, DateTime originalValue, String label, bool enabled = true}) {
+  static Container dateTimeField({BuildContext context, DateFormat format, DateTime originalValue, String label, bool enabled = true,
+    Function(DateTime) onChangedFunc, TextEditingController textEditingController}) {
     return _inputContainer(
       child: DateTimeField(
         enabled: enabled,
+        controller: textEditingController,
         style: ThemeTextStyles.formText,
         decoration: inputDecoration(label),
         initialValue: originalValue,
-        format: format ?? DateFormat(detailedDateFormatString),
+        format: format ?? DateFormat(detailedDateFormatString), //DateFormat(detailedDateFormatWithSecondsString),
+        onChanged: onChangedFunc,
         onShowPicker: (context, currentValue) async {
           final date = await showDatePicker(
             context: context,
@@ -373,6 +376,22 @@ class ThemeSnackBar {
           borderRadius: BorderRadius.vertical(top: Radius.circular(8))
         ),
       )
+    );
+  }
+}
+
+class ThemeIconButtons {
+  const ThemeIconButtons();
+
+  static IconButton buildIconButton({IconData iconData, double iconSize = 30, Color color = ThemeColors.unselectedButtonColor,
+    Color splashColor = ThemeColors.highlightedData, VoidCallback onPressedFunc}) {
+    return IconButton(
+      padding: const EdgeInsets.all(5),
+      icon: Icon(iconData),
+      iconSize: iconSize,
+      color: color,
+      onPressed: onPressedFunc,
+      splashColor: splashColor,
     );
   }
 }

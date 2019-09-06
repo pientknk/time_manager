@@ -9,11 +9,18 @@ class Routing {
   static const projectDetailRoute = "/project/detail";
   static const projectAddRoute = "/project/add";
   static const settingsRoute = "/settings";
+  static const workItemAddRoute = "/workItem/add";
+  static const workItemDetailRoute = "/workItem/detail";
+  static const workItemEditRoute = "/workItem/edit";
+
   static void initRoutes() {
     _router.define("$projectDetailRoute/:id", handler: projectDetailHandler);
     _router.define("$projectEditRoute/:id", handler: projectEditHandler);
     _router.define("$projectAddRoute/:applicationId", handler: projectAddHandler);
     _router.define(settingsRoute, handler: settingsHandler);
+    _router.define("$workItemAddRoute/:projectId", handler: workItemAddHandler);
+    _router.define("$workItemDetailRoute/:id", handler: workItemDetailHandler);
+    _router.define("$workItemEditRoute/:id", handler: workItemEditHandler);
   }
 
   static Handler projectDetailHandler = Handler(
@@ -37,6 +44,24 @@ class Routing {
   static Handler settingsHandler = Handler(
     handlerFunc: (BuildContext context, Map<String, dynamic> params) {
       return SettingsPage();
+    }
+  );
+
+  static Handler workItemAddHandler = Handler(
+    handlerFunc: (BuildContext context, Map<String, dynamic> params) {
+      return WorkItemAddPage(params["projectId"][0]);
+    }
+  );
+
+  static Handler workItemDetailHandler = Handler(
+    handlerFunc: (BuildContext context, Map<String, dynamic> params) {
+      return WorkItemDetailPage(params["id"][0]);
+    }
+  );
+
+  static Handler workItemEditHandler = Handler(
+    handlerFunc: (BuildContext context, Map<String, dynamic> params) {
+      return WorkItemEditPage(params["id"][0]);
     }
   );
 
