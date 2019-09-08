@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:time_manager/widgets.dart';
-import 'package:time_manager/routing.dart';
+import 'package:time_manager/common/routing.dart';
+import 'package:time_manager/view/main_page.dart';
+import 'package:time_manager/model/data_samples.dart';
+import 'package:time_manager/common/debug.dart';
 
 void main() {
   //setup before running the app
   Routing.initRoutes();
+  bool isDataSetup = DataSamples.initData();
+  if(!isDataSetup){
+    Debug.debugPrintMessage('Error setting up sample data');
+  }
 
   runApp(MyApp());
 }
@@ -20,7 +26,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Livvic',
       ),
       ///can't have an InitialRoute and a home property
-      home: HomePage(title: 'Time Manager')
+      home: MainPage(title: 'Time Manager')
     );
   }
 }

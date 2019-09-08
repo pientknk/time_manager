@@ -1,6 +1,8 @@
 import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
-import 'package:time_manager/widgets.dart';
+import 'package:time_manager/view/project_page.dart';
+import 'package:time_manager/view/work_item_page.dart';
+import 'package:time_manager/view/settings_page.dart';
 
 class Routing {
   static final Router _router = Router();

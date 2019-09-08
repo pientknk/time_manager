@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:device_info/device_info.dart';
-import 'package:time_manager/data.dart';
+import 'package:time_manager/model/data.dart';
+import 'package:time_manager/model/data_samples.dart';
 
 const String shortDateFormatString = "MM/dd/yyyy hh:mm";
 ///Formats the given DateTime into a string consisting of MM/dd/yyyy hh:mm.
@@ -59,12 +59,4 @@ String longDurationFormat(Duration duration){
 
 String _ensureTwoDigits(int amount){
   return amount >= 10 ? '$amount' : '0$amount';
-}
-
-Project getProjectByID(String id) {
-  return GetData.getProjectsMap()[id];
-}
-
-WorkItem getWorkItemByID(String id) {
-  return GetData.getWorkItemsMap()[id];
 }

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:time_manager/data.dart';
-import 'package:time_manager/helpers.dart';
-import 'package:time_manager/widgets.dart';
-import 'dart:async';
-import 'package:time_manager/theme.dart';
-import 'package:time_manager/material_data.dart';
-import 'package:time_manager/routing.dart';
+import 'package:time_manager/model/data.dart';
+import 'package:time_manager/model/data_samples.dart';
+import 'package:time_manager/common/theme.dart';
+import 'package:time_manager/common/routing.dart';
 import 'package:fluro/fluro.dart';
+import 'package:time_manager/common/data_utils.dart';
+import 'package:time_manager/common/app_scaffold.dart';
 
 class CurrentProjectsTab extends StatefulWidget {
   CurrentProjectsTab({
@@ -17,8 +16,8 @@ class CurrentProjectsTab extends StatefulWidget {
 }
 
 class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
-  static final _projects = GetData.getProjects().toList(growable: false);
-  static final _filters = GetData.getFilters().toList(growable: false);
+  static final _projects = DataSamples.projects;
+  static final _filters = DataSamples.getFilters().toList(growable: false);
 
   @override
   Widget build(BuildContext context) {
@@ -33,8 +32,8 @@ class AvailableProjectsTab extends StatefulWidget {
 }
 
 class _AvailableProjectsTabState extends State<AvailableProjectsTab> {
-  static final _projects = GetData.getProjects().toList(growable: false);
-  static final _filters = GetData.getFilters().toList(growable: false);
+  static final _projects = DataSamples.projects;
+  static final _filters = DataSamples.getFilters().toList(growable: false);
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +48,8 @@ class CompletedProjectsTab extends StatefulWidget {
 }
 
 class _CompletedProjectsTabState extends State<CompletedProjectsTab> {
-  static final _projects = GetData.getProjects().toList(growable: false);
-  static final _filters = GetData.getFilters().toList(growable: false);
+  static final _projects = DataSamples.projects;
+  static final _filters = DataSamples.getFilters().toList(growable: false);
 
   @override
   Widget build(BuildContext context) {
@@ -198,14 +197,14 @@ class CardRow extends StatelessWidget{
                   child: Row(
                     children: <Widget>[
                       _buildRowButtonDismissPopup(
-                        buttonContents: BottomAppBarTab(text: 'Delete', icon: Icons.delete_forever),
+                        buttonContents: AppScaffoldBottomAppBarTab(text: 'Delete', icon: Icons.delete_forever),
                         onTapFunc: () {
                           print('deleting project at some point');
                           Navigator.pop(context);
                         }
                       ),
                       _buildRowButtonDismissPopup(
-                        buttonContents: BottomAppBarTab(text: 'Cancel', icon: Icons.cancel),
+                        buttonContents: AppScaffoldBottomAppBarTab(text: 'Cancel', icon: Icons.cancel),
                         onTapFunc: () {
                           print('cancelling the delete');
                           Navigator.pop(context);
@@ -231,7 +230,7 @@ class CardRow extends StatelessWidget{
   Expanded _buildRowButtonDismissPopup(
     {double height = 60,
       Color color = ThemeColors.appMain,
-      @required BottomAppBarTab buttonContents,
+      @required AppScaffoldBottomAppBarTab buttonContents,
       GestureTapCallback onTapFunc}) {
     return Expanded(
       child: SizedBox(

@@ -1,4 +1,4 @@
-import 'package:time_manager/abstracts.dart';
+import 'package:time_manager/model/common/abstracts.dart';
 import 'package:flutter/foundation.dart';
 
 class WorkItem implements Data{
@@ -17,6 +17,13 @@ class WorkItem implements Data{
     this.createdTime = now;
     this.startTime = now;
     this.endTime = now;
+  }
+
+  WorkItem.create({@required this.workItemID, @required this.startTime, @required this.projectID, @required this.summary,
+    @required this.details, this.endTime}) {
+    this.createdTime = DateTime.now();
+    this.updatedTime = this.createdTime;
+    this.duration = this.endTime.difference(this.startTime);
   }
 
   WorkItem._({@required this.workItemID, @required this.startTime, @required this.projectID, @required this.summary,
@@ -74,13 +81,13 @@ class Project implements Data {
   Project._({@required this.projectID, @required this.applicationID, @required this.name, @required this.details, @required this.status,
     this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime, this.applicationName});
 
-  factory Project(int projectID, int systemID, String name, String details, {Duration totalHours = const Duration(hours: 11, minutes: 38),
+  factory Project(int projectID, int applicationId, String name, String details, {Duration totalHours = const Duration(hours: 11, minutes: 38),
     String status = StatusTypes.available, int workItems = 19}){
     //TODO: retrieve info about application from the appID
     String appName = ApplicationNames.options[projectID];
     
     DateTime createdTime = DateTime.now();
-    return Project._(projectID: projectID, applicationID: systemID, createdTime: createdTime, updatedTime: createdTime,
+    return Project._(projectID: projectID, applicationID: applicationId, createdTime: createdTime, updatedTime: createdTime,
       name: name, details: details, status: status, totalHours: totalHours, workItemCount: workItems, applicationName: appName
     );
   }
@@ -198,69 +205,4 @@ class Settings {
 
 }
 
-class GetData{
-  const GetData();
 
-  static Map<String, WorkItem> getWorkItemsMap(){
-    Map<String, WorkItem> workItemMap = Map<String, WorkItem>();
-    getWorkItems().forEach((item) {
-      workItemMap[item.workItemID.toString()] = item;
-    });
-
-    return workItemMap;
-  }
-
-  static Iterable<WorkItem> getWorkItems(){
-    return [
-      WorkItem(1, 1, 'I did some work today', 'The work was real good'),
-      WorkItem(2, 1, 'I did some more work today', 'I did some more work today on the same project'),
-      WorkItem(3, 1, 'Still working', 'holy cow I did even more work on this project'),
-      WorkItem(4, 2, 'Now this is the 2nd project worked on', 'I did some of this and some of that ya know?')
-    ];
-  }
-
-  static Iterable<Filter> getFilters(){
-    return [
-      Filter(1, 'Current', true, true, status: StatusTypes.assigned),
-      Filter(2, 'Available', true, false, status: StatusTypes.available),
-      Filter(3, 'Completed', true, true, status: StatusTypes.finished),
-    ];
-  }
-
-  static Map<String, Project> getProjectsMap(){
-    Map<String, Project> projectMap = Map<String, Project>();
-    getProjects().forEach((proj) {
-      projectMap[proj.projectID.toString()] = proj;
-    });
-
-    return projectMap;
-  }
-
-  static Iterable<Project> getProjects(){
-    return [
-      Project(1, 1, 'This is my first project yo', 'Since this is my first project I should probly do something',
-          workItems: 23, totalHours: Duration(hours: 9, minutes: 23), status: StatusTypes.assigned),
-      Project(2, 1, 'This is a second project so this is good', 'wow I can\'t believe this is my second project',
-          workItems: 1, totalHours: Duration(hours: 1, minutes: 1)),
-      Project(3, 1, 'Oof third project is a lot of work', 'Can I go home?',
-          workItems: 15, totalHours: Duration(hours: 3, minutes: 0)),
-      Project(4, 1, 'Now this is just a lot of work', 'Since this is a lot of work I must be making a lot of prorgress', workItems: 9),
-      Project(5, 1, 'What if this was like the 5th project?', '5 projects is a lot man, what should i do now?',
-          workItems: 123, totalHours: Duration(hours: 127, minutes: 59), status: StatusTypes.finished),
-      Project(6, 1, 'Time manager should work', 'yeah lets make time manager work this time instead of bailing out',
-          totalHours: Duration(hours: 7, minutes: 59)),
-    ];
-  }
-
-  static Iterable<Application> getApplications(){
-    return [
-      Application(1, 'Time Manager', 'A mobile app to manage time developing personal projects'),
-      Application(2, 'Jodeler', 'A mobile app to choose jodels to send to your friends'),
-      Application(3, 'Web Scraper/Crawler', 'A c# web app for web scraping from websites to gain information or to web crawl to gather info'),
-      Application(4, 'Live it UP', 'A party app containing music, drinks, and drinking games for all to have fun'),
-      Application(5, 'Package Drop', 'A unity game: strategy game that progressively gets difficult, the player must navigate packages to the goal'),
-      Application(6, 'CoOperation Breakout', 'A unity game:  2 player co op puzzle game where the players have to work together to get past the puzzles'),
-      Application(7, 'Data Structures', 'An application to test different data structures and experiment with them, possibly trying to make my own new types'),
-    ];
-  }
-}
