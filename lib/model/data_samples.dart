@@ -26,7 +26,8 @@ class DataSamples{
         workItems: 1, totalHours: Duration(hours: 1, minutes: 1)),
       Project(3, 1, 'Oof third project is a lot of work', 'Can I go home?',
         workItems: 15, totalHours: Duration(hours: 3, minutes: 0)),
-      Project(4, 1, 'Now this is just a lot of work', 'Since this is a lot of work I must be making a lot of prorgress', workItems: 9),
+      Project(4, 1, 'Now this is just a lot of work', 'Since this is a lot of work I must be making a lot of prorgress',
+        workItems: 9, totalHours: Duration(hours: 2, minutes: 58)),
       Project(5, 1, 'What if this was like the 5th project?', '5 projects is a lot man, what should i do now?',
         workItems: 123, totalHours: Duration(hours: 127, minutes: 59), status: StatusTypes.finished),
       Project(6, 1, 'Time manager should work', 'yeah lets make time manager work this time instead of bailing out',
@@ -76,10 +77,14 @@ class DataSamples{
   static List<WorkItem> workItems = [];
   static Iterable<WorkItem> _getWorkItems(){
     return [
-      WorkItem(1, 1, 'I did some work today', 'The work was real good'),
-      WorkItem(2, 1, 'I did some more work today', 'I did some more work today on the same project'),
-      WorkItem(3, 1, 'Still working', 'holy cow I did even more work on this project'),
-      WorkItem(4, 2, 'Now this is the 2nd project worked on', 'I did some of this and some of that ya know?')
+      WorkItem.create(workItemID: 1, startTime: DateTime(2019, 10, 9, 8, 2), endTime: DateTime(2019, 10, 9, 9, 19), projectID: 1,
+        summary: 'I did some work today', details: 'The work was real good'),
+      WorkItem.create(workItemID: 2, startTime: DateTime(2019, 11, 19, 12, 45), endTime: DateTime(2019, 11, 19, 16, 24), projectID: 1,
+        summary: 'I did some more work today', details: 'I did some more work today on the same project'),
+      WorkItem.create(workItemID: 3, startTime: DateTime(2019, 11, 20, 4, 51), endTime: DateTime(2019, 11, 20, 6, 20), projectID: 1,
+        summary: 'I did some more work today', details: 'I did some more work today on the same project'),
+      WorkItem.create(workItemID: 4, startTime: DateTime(2019, 11, 21, 5, 12), endTime: DateTime(2019, 11, 21, 8, 32), projectID: 1,
+        summary: 'Now this is the 2nd project I worked on and I did the thing', details: 'I did some of this and some of that ya know?'),
     ];
   }
   static bool addWorkItem({int projectId, String summary, String details, DateTime startTime, DateTime endTime}){
@@ -120,6 +125,17 @@ class DataSamples{
   }
   static WorkItem getWorkItemByIdString(String id) {
     return DataSamples.getWorkItemById(int.parse(id));
+  }
+  static Iterable<WorkItem> getAllWorkItemsForProject(int projectId){
+    List<WorkItem> relatedWorkItems = [];
+
+    workItems.forEach((workItem){
+      if(workItem.projectID == projectId){
+        relatedWorkItems.add(workItem);
+      }
+    });
+
+    return relatedWorkItems;
   }
 
   static Iterable<Filter> getFilters(){

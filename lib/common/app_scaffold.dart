@@ -134,7 +134,7 @@ class AppScaffoldBottomAppBar extends StatefulWidget {
       this.selectedColor,
       this.notchedShape,
       this.onTabSelected}) {
-    assert(this.items.length == 3); //want to enforce there to be 3 tabs
+    assert(this.items.length == 4); //want to enforce there to be 4 tabs
   }
 
   final List<AppScaffoldBottomAppBarTab> items;

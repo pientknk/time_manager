@@ -367,12 +367,113 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
   }
 }
 
+class WorkItemCard extends StatelessWidget{
+  WorkItemCard({Key key, this.workItem}) : super(key: key);
+
+  final WorkItem workItem;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      padding: const EdgeInsets.all(2),
+      margin: const EdgeInsets.only(top: 10, bottom: 5, left: 10, right: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      ///TODO: try using inkwell instead with transparency so that it hopefully gets the ink splash on press an hold
+      child: FlatButton(
+        padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 1),
+        onPressed: () {
+          Routing.navigateTo(context, "${Routing.workItemDetailRoute}/${workItem.workItemID}");
+        },
+        child: _buildCardContents(context),
+      ),
+    );
+  }
+
+  Widget _buildCardContents(BuildContext context){
+    return Container(
+      //color: Colors.orange,
+      constraints: BoxConstraints.expand(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Expanded(
+            flex: 12,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                Expanded(
+                  flex: 5,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: <Widget>[
+                      Expanded(
+                        flex: 1,
+                        child: Container(
+                          child: ThemeText.commonHeaderText(workItem.summary),
+                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          //color: Colors.red[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 1),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: ThemeText.highlightedText(shortDurationFormat(workItem.duration)),
+                            //color: Colors.blue[500],
+                          ),
+                        ),
+                        Expanded(
+                          flex: 5,
+                          child: Center(
+                            child: Container(
+                              child: ThemeText.commonText("${detailedDateFormat24WithSecondsHour(workItem.startTime)} - ${shortHoursOnly24HourFormat(workItem.endTime)}"),
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              //color: Colors.blue[500],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Icon(Icons.more_vert)
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class WorkItemForm extends StatefulWidget {
+  WorkItemForm({@required this.workItem, @required this.formKey, this.enabled = true});
+
   final GlobalKey<FormState> formKey;
   final bool enabled;
   final WorkItem workItem;
-
-  WorkItemForm({@required this.workItem, @required this.formKey, this.enabled = true});
 
   _WorkItemFormState createState() => _WorkItemFormState();
 }
@@ -386,6 +487,17 @@ class _WorkItemFormState extends State<WorkItemForm> {
 
   @override
   Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: _buildWorkItemForm(
+        context: context,
+        enabled: widget.enabled,
+      ),
+    );
+  }
+
+  Widget _buildWorkItemForm({BuildContext context, bool enabled}){
     return ThemeForm.buildForm(
       formKey: widget.formKey,
       listViewChildren: <Widget>[
@@ -395,20 +507,22 @@ class _WorkItemFormState extends State<WorkItemForm> {
           initialValue: widget.workItem.summary,
         ),
         ThemeInput.textFormField(
-          enabled: false,
+          enabled: widget.enabled,
           label: 'Details',
           initialValue: widget.workItem.details,
           maxLines: 2,
         ),
         ThemeInput.dateTimeField(
-          enabled: false,
+          enabled: widget.enabled,
           context: context,
           label: 'started',
+          originalValue: widget.workItem.startTime,
         ),
         ThemeInput.dateTimeField(
-          enabled: false,
+          enabled: widget.enabled,
           context: context,
           label: 'completed',
+          originalValue: widget.workItem.endTime,
         ),
       ]
     );

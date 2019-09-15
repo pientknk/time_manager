@@ -67,6 +67,7 @@ class Project implements Data {
   String applicationName;
   String name;
   String details;
+  int priority;
   String status;
   DateTime startedTime;
   DateTime completedTime;
@@ -75,20 +76,21 @@ class Project implements Data {
 
   Project.newProject({@required this.applicationID}){
     DateTime createdTime = DateTime.now();
+    this.priority = 9999;
     this.createdTime = createdTime;
   }
 
   Project._({@required this.projectID, @required this.applicationID, @required this.name, @required this.details, @required this.status,
-    this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime, this.applicationName});
+    this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime, this.applicationName, this.priority});
 
   factory Project(int projectID, int applicationId, String name, String details, {Duration totalHours = const Duration(hours: 11, minutes: 38),
-    String status = StatusTypes.available, int workItems = 19}){
+    String status = StatusTypes.available, int workItems = 19, int priority = 999}){
     //TODO: retrieve info about application from the appID
     String appName = ApplicationNames.options[projectID];
     
     DateTime createdTime = DateTime.now();
     return Project._(projectID: projectID, applicationID: applicationId, createdTime: createdTime, updatedTime: createdTime,
-      name: name, details: details, status: status, totalHours: totalHours, workItemCount: workItems, applicationName: appName
+      name: name, details: details, status: status, totalHours: totalHours, workItemCount: workItems, applicationName: appName, priority: priority
     );
   }
 

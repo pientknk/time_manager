@@ -59,6 +59,20 @@ class ThemeTextStyles{
     fontWeight: FontWeight.bold,
     color: ThemeColors.headerText,
   );
+
+  static const TextStyle commonText = const TextStyle(
+    fontFamily: mainFont,
+    fontSize: 18,
+    fontWeight: FontWeight.w300,
+    color: ThemeColors.mainText,
+  );
+
+  static const TextStyle commonBoldText = const TextStyle(
+    fontFamily: mainFont,
+    fontSize: 18,
+    fontWeight: FontWeight.w500,
+    color: ThemeColors.mainText,
+  );
 }
 
 class ThemeText {
@@ -75,6 +89,28 @@ class ThemeText {
       style: ThemeTextStyles.headerText,
       maxLines: 2,
       minFontSize: 18,
+      textAlign: TextAlign.left,
+      semanticsLabel: 'n/a',
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  static AutoSizeText commonText(String text) {
+    return AutoSizeText(text,
+      style: ThemeTextStyles.commonText,
+      maxLines: 1,
+      minFontSize: 16,
+      textAlign: TextAlign.left,
+      semanticsLabel: 'n/a',
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  static AutoSizeText commonHeaderText(String text) {
+    return AutoSizeText(text,
+      style: ThemeTextStyles.commonBoldText,
+      maxLines: 2,
+      minFontSize: 16,
       textAlign: TextAlign.left,
       semanticsLabel: 'n/a',
       overflow: TextOverflow.ellipsis,
@@ -383,7 +419,7 @@ class ThemeSnackBar {
 class ThemeIconButtons {
   const ThemeIconButtons();
 
-  static IconButton buildIconButton({IconData iconData, double iconSize = 30, Color color = ThemeColors.unselectedButtonColor,
+  static IconButton buildIconButton({@required IconData iconData, double iconSize = 30, Color color = ThemeColors.unselectedButtonColor,
     Color splashColor = ThemeColors.highlightedData, VoidCallback onPressedFunc}) {
     return IconButton(
       padding: const EdgeInsets.all(5),
@@ -395,3 +431,16 @@ class ThemeIconButtons {
     );
   }
 }
+
+class ThemeIcon {
+  const ThemeIcon();
+
+  static Icon lightIcon({@required IconData iconData, double size = 30}){
+    return Icon(iconData,
+      color: Colors.white,
+      size: size,
+    );
+  }
+}
+
+///TODO: look into flushbar in the pub for a cool feature for notifications

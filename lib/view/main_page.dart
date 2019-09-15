@@ -35,6 +35,8 @@ class _MainPageState extends State<MainPage>
       case 2:
         _tabBodyWidget = CompletedProjectsTab();
         break;
+      case 3:
+        _tabBodyWidget = TestingTab();
     }
   }
 
@@ -67,6 +69,7 @@ class _MainPageState extends State<MainPage>
           AppScaffoldBottomAppBarTab(icon: Icons.timelapse, text: 'ASSIGNED'),
           AppScaffoldBottomAppBarTab(icon: Icons.event_available, text: 'AVAILABLE'),
           AppScaffoldBottomAppBarTab(icon: Icons.history, text: 'COMPLETED'),
+          AppScaffoldBottomAppBarTab(icon: Icons.table_chart, text: 'TESTING')
         ],
         //Tabs
         backgroundColor: ThemeColors.appMain,

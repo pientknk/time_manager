@@ -1,7 +1,5 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:time_manager/model/data.dart';
-import 'package:time_manager/model/data_samples.dart';
 
 const String shortDateFormatString = "MM/dd/yyyy hh:mm";
 ///Formats the given DateTime into a string consisting of MM/dd/yyyy hh:mm.
@@ -22,6 +20,11 @@ String detailedDateFormatWithSeconds(DateTime dateTime) {
   return DateFormat(detailedDateFormatWithSecondsString).format(dateTime);
 }
 
+const String detailedDateFormat24HourWithSecondsString = "MM/dd/yyyy HH:mm:ss";
+String detailedDateFormat24WithSecondsHour(DateTime dateTime) {
+  return DateFormat(detailedDateFormat24HourWithSecondsString).format(dateTime);
+}
+
 const String longDetailedDateFormatString = "EEEE, MMMM dd, yyyy hh:mm a";
 /// Formats the given DateTime into a string consisting of EEEE, MMMM dd, yyyy hh:mm a.
 ///   See [DateFormat]
@@ -36,6 +39,13 @@ String veryShortDateFormat(DateTime dateTime){
   return DateFormat(veryShortDateFormatString).format(dateTime);
 }
 
+const String shortHoursOnly24HourFormatString = "HH:mm:ss";
+/// Formats the given DateTime into a string consisting of HH:mm:ss.
+///   See [DateFormat]
+String shortHoursOnly24HourFormat(DateTime dateTime){
+  return DateFormat(shortHoursOnly24HourFormatString).format(dateTime);
+}
+
 /// returns a [Color] converted from the given hexadecimal code representation
 Color hexToColor(String code){
   return new Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
@@ -43,6 +53,10 @@ Color hexToColor(String code){
 
 /// Formats the given [Duration] to a String representation of hh:mm
 String shortDurationFormat(Duration duration){
+  if(duration == null){
+    return '00:00';
+  }
+
   String durationInHours = _ensureTwoDigits(duration.inHours);
   String durationInMinutes = _ensureTwoDigits(duration.inMinutes % 60);
 
@@ -50,6 +64,10 @@ String shortDurationFormat(Duration duration){
 }
 
 String longDurationFormat(Duration duration){
+  if(duration == null){
+    return '00:00:00';
+  }
+
   String durationInHours = _ensureTwoDigits(duration.inHours);
   String durationInMinutes = _ensureTwoDigits(duration.inMinutes % 60);
   String durationInSeconds = _ensureTwoDigits(duration.inSeconds % 60);
@@ -58,5 +76,13 @@ String longDurationFormat(Duration duration){
 }
 
 String _ensureTwoDigits(int amount){
-  return amount >= 10 ? '$amount' : '0$amount';
+  if(amount == null){
+    amount = 0;
+  }
+
+  if(amount == 0 || amount < 10){
+    return '0$amount';
+  }else{
+    return amount.toString();
+  }
 }
