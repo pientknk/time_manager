@@ -9,6 +9,9 @@
 .history
 .svn/
 
+#generated bin/sh file
+*.sh
+
 # IntelliJ related
 *.iml
 *.ipr
