@@ -1,6 +1,6 @@
 # time_manager
 
-A new Flutter application.
+A Flutter application for managing time spent on any projects.
 
 ## Getting Started
 
