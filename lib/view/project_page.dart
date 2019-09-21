@@ -12,12 +12,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:time_manager/view/work_item_page.dart';
+import 'package:time_manager/common/more_options_popup_menu.dart';
 
 class ProjectAddPage extends StatefulWidget {
   final Project project;
 
   ProjectAddPage(String applicationID):
-      project = Project.newProject(applicationID: int.parse(applicationID));
+      project = Project.newProject(applicationId: int.parse(applicationID));
 
   _ProjectAddPageState createState() => _ProjectAddPageState();
 }
@@ -89,11 +90,11 @@ class ProjectDetailPage extends StatelessWidget {
     )..show(context);
   }
 
-  Widget _floatingCollapsed(){
-    return _floatingHeader();
+  Widget _floatingCollapsed({@required int numWorkItems}){
+    return _floatingHeader(numWorkItems: numWorkItems);
   }
 
-  Widget _floatingHeader(){
+  Widget _floatingHeader({@required int numWorkItems}){
     return Container(
       decoration: BoxDecoration(
         color: Colors.black,
@@ -111,7 +112,7 @@ class ProjectDetailPage extends StatelessWidget {
             ],
           ),
           Center(
-            child: ThemeText.headerText("Work Items (2)"),
+            child: ThemeText.headerText("Work Items ($numWorkItems)"),
           ),
         ],
       )
@@ -126,7 +127,7 @@ class ProjectDetailPage extends StatelessWidget {
       ),
       child: Column(
         children: <Widget>[
-          _floatingHeader(),
+          _floatingHeader(numWorkItems: workItems.length),
           Expanded(
             flex: 1,
             child: Container(
@@ -146,7 +147,7 @@ class ProjectDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<WorkItem> _workItems = DataSamples.getAllWorkItemsForProject(project.projectID);
+    List<WorkItem> _workItems = DataSamples.getAllWorkItemsForProject(project.projectId);
 
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Project Details'),
@@ -154,7 +155,7 @@ class ProjectDetailPage extends StatelessWidget {
         ThemeIconButtons.buildIconButton(
           iconData: Icons.edit,
           onPressedFunc: () {
-            Routing.navigateTo(context, "${Routing.projectEditRoute}/${project.projectID}");
+            Routing.navigateTo(context, "${Routing.projectEditRoute}/${project.projectId}");
           }
         ),
         ThemeIconButtons.buildIconButton(
@@ -171,14 +172,14 @@ class ProjectDetailPage extends StatelessWidget {
         backdropOpacity: 0.35,
         renderPanelSheet: false,
         panel: _floatingPanel(_workItems),
-        collapsed: _floatingCollapsed(),
+        collapsed: _floatingCollapsed(numWorkItems: _workItems.length),
         body: ProjectForm(
           formKey: _formKey,
           project: project,
         ),
       ),
       floatingActionButton: AppScaffoldFAB(
-        route: "${Routing.workItemAddRoute}/${project.projectID}",
+        route: "${Routing.workItemAddRoute}/${project.projectId}",
         tooltip: 'Add a Work Item',
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -262,20 +263,20 @@ class _ProjectFormState extends State<ProjectForm>{
         ThemeInput.intFormField(
           enabled: widget.enabled,
           label: 'priority',
-          initialValue: widget.project.priority ?? '9999',
+          initialValue: widget.project.priority?.toString() ?? "9999",
         ),
         ThemeForm.buildFormRowFromFields(
           children: <Widget>[
             ThemeForm.buildFormFieldDropdown(
               enabled: enabled,
               labelText: 'application',
-              value: widget.project.applicationName,
+              value: widget.project.applicationId?.toString() ?? "n/a",
               options: ApplicationNames.options,
             ),
             ThemeForm.buildFormFieldDropdown(
               enabled: enabled,
               labelText: 'status',
-              value: widget.project.status,
+              value: widget.project.status ?? "n/a",
               options: StatusTypes.options,
             ),
           ]
@@ -283,12 +284,12 @@ class _ProjectFormState extends State<ProjectForm>{
         ThemeInput.textFormField(
           enabled: enabled,
           label: 'Name',
-          initialValue: widget.project.name,
+          initialValue: widget.project.name ?? "n/a",
         ),
         ThemeInput.textFormField(
           enabled: enabled,
           label: 'Details',
-          initialValue: widget.project.details,
+          initialValue: widget.project.details ?? "n/a",
           maxLines: 2,
         ),
         ThemeInput.dateTimeField(
@@ -308,7 +309,7 @@ class _ProjectFormState extends State<ProjectForm>{
         ThemeForm.buildFormRowFromFields(
           children: <Widget>[
             ThemeInput.intFormField(
-              initialValue: widget.project.workItemCount.toString(),
+              initialValue: widget.project.workItemCount?.toString() ?? "0",
               enabled: false,
               label: 'work items',
             ),
@@ -320,70 +321,6 @@ class _ProjectFormState extends State<ProjectForm>{
           ]
         ),
       ]
-    );
-  }
-}
-
-class ProjectPopupMenu extends StatelessWidget{
-  ProjectPopupMenu({@required this.project, @required this.title, @required this.contents});
-
-  final Project project;
-  final String title;
-  final Widget contents;
-
-  @override
-  Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        cardColor: ThemeColors.card,
-      ),
-      child: PopupMenuButton<int>(
-        elevation: 4,
-        icon: Icon(Icons.more_vert, color: ThemeColors.mainText,),
-        onSelected: (value) {
-          switch(value){
-            case 1:
-              Routing.navigateTo(context, "${Routing.projectDetailRoute}/${project.projectID}", transition: TransitionType.fadeIn);
-              break;
-            case 2:
-              Routing.navigateTo(context, "${Routing.projectEditRoute}/${project.projectID}", transition: TransitionType.fadeIn);
-              break;
-            case 3:
-              ModalPopup(
-                title: title,
-                buildContext: context,
-                //contents: contents,
-                contents: Container(
-                  child: Row(
-                    children: <Widget>[
-                      ModalPopupDismissOption(
-                        appScaffoldBottomAppBarTab: AppScaffoldBottomAppBarTab(text: 'Delete', icon: Icons.delete_forever),
-                        onTapFunc: () {
-                          print('deleting project at some point');
-                          Navigator.pop(context);
-                        }
-                      ),
-                      ModalPopupDismissOption(
-                        appScaffoldBottomAppBarTab: AppScaffoldBottomAppBarTab(text: 'Cancel', icon: Icons.cancel),
-                        onTapFunc: () {
-                          print('cancelling the delete');
-                          Navigator.pop(context);
-                        }
-                      )
-                    ],
-                  ),
-                )
-              );
-          }
-        },
-        itemBuilder: (context) => [
-          ModalPopupMenuOptions.modalPopupMenuOption(value: 1, iconData: Icons.details, label: 'details',),
-          PopupMenuDivider(height: 3),
-          ModalPopupMenuOptions.modalPopupMenuOption(value: 2, iconData: Icons.edit, label: 'edit',),
-          PopupMenuDivider(height: 3),
-          ModalPopupMenuOptions.modalPopupMenuOption(value: 2, iconData: Icons.delete_forever, label: 'delete',),
-        ]
-      ),
     );
   }
 }
@@ -443,29 +380,6 @@ class ProjectCard extends StatelessWidget{
     );
   }
 
-  Widget _buildPopupMenuContents(BuildContext context){
-    return Container(
-      child: Row(
-        children: <Widget>[
-          ModalPopupDismissOption(
-            appScaffoldBottomAppBarTab: AppScaffoldBottomAppBarTab(text: 'Delete', icon: Icons.delete_forever),
-            onTapFunc: () {
-              print('deleting project at some point');
-              Navigator.pop(context);
-            }
-          ),
-          ModalPopupDismissOption(
-            appScaffoldBottomAppBarTab: AppScaffoldBottomAppBarTab(text: 'Cancel', icon: Icons.cancel),
-            onTapFunc: () {
-              print('cancelling the delete');
-              Navigator.pop(context);
-            }
-          )
-        ],
-      ),
-    );
-  }
-
   Widget _buildCardRow(BuildContext context){
     return Row(
       children: <Widget>[
@@ -490,10 +404,11 @@ class ProjectCard extends StatelessWidget{
             margin: const EdgeInsets.only(top: 6),
             child: Column(
               children: <Widget>[
-                ProjectPopupMenu(
-                  project: project,
-                  title: "Delete ${project.name}",
-                  contents: _buildPopupMenuContents(context),
+                MoreOptionsPopupMenu(
+                  idFieldValue: project.projectId,
+                  detailRouteName: Routing.projectDetailRoute,
+                  editRouteName: Routing.projectEditRoute,
+                  deleteWhat: project.name,
                 )
               ],
             ),
@@ -535,7 +450,7 @@ class ProjectCard extends StatelessWidget{
       margin: const EdgeInsets.only(top: 16, bottom: 8),
       child: FlatButton(
         onPressed: () {
-          Routing.navigateTo(context, "${Routing.projectDetailRoute}/${project.projectID}", transition: TransitionType.fadeIn);
+          Routing.navigateTo(context, "${Routing.projectDetailRoute}/${project.projectId}", transition: TransitionType.fadeIn);
         },
         child: _buildCardContents(context),
       ),

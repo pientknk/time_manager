@@ -220,7 +220,7 @@ class ThemeInput {
         controller: textEditingController,
         style: ThemeTextStyles.formText,
         decoration: inputDecoration(label),
-        initialValue: originalValue,
+        initialValue: originalValue ?? "",
         format: format ?? DateFormat(detailedDateFormatString), //DateFormat(detailedDateFormatWithSecondsString),
         onChanged: onChangedFunc,
         onShowPicker: (context, currentValue) async {
@@ -248,7 +248,7 @@ class ThemeInput {
     return _inputContainer(
       child: TextFormField(
         style: ThemeTextStyles.formText,
-        initialValue: initialValue,
+        initialValue: initialValue ?? "",
         validator: validatorFunc,
         enabled: enabled,
         maxLines: 1,

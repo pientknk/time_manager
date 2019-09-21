@@ -7,6 +7,7 @@ import 'package:time_manager/common/app_scaffold.dart';
 import 'package:time_manager/common/theme.dart';
 import 'package:time_manager/common/routing.dart';
 import 'package:intl/intl.dart';
+import 'package:time_manager/common/more_options_popup_menu.dart';
 
 class WorkItemAddPage extends StatefulWidget {
   final Project project;
@@ -27,7 +28,7 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
   @override
   void initState() {
     startTimer();
-    workItem = WorkItem.newWorkItem(projectID: widget.project.projectID);
+    workItem = WorkItem.newWorkItem(projectId: widget.project.projectId);
     endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.endTime));
     super.initState();
   }
@@ -77,43 +78,10 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
           ),
           Expanded(
             flex: 4,
-            child: ThemeForm.buildForm(
+            child: WorkItemForm(
+              workItem: workItem,
               formKey: _formKey,
-              listViewChildren: <Widget>[
-                ThemeInput.textFormField(
-                  label: 'Project',
-                  enabled: false,
-                  initialValue: widget.project.name,
-                  maxLines: 1
-                ),
-                ThemeInput.textFormField(
-                  label: 'Summary',
-                  validatorFunc: (val) {
-                    return null;
-                  },
-                ),
-                ThemeInput.textFormField(
-                  label: 'Details',
-                  maxLines: 2,
-                  validatorFunc: (val) {
-                    return null;
-                  }
-                ),
-                ThemeInput.dateTimeField(
-                  originalValue: workItem.startTime,
-                  format: DateFormat(detailedDateFormatWithSecondsString),
-                  enabled: false,
-                  context: context,
-                  label: 'started',
-                ),
-                ThemeInput.dateTimeField(
-                  textEditingController: endTimeController,
-                  format: DateFormat(detailedDateFormatWithSecondsString),
-                  enabled: false,
-                  context: context,
-                  label: 'ended',
-                ),
-              ],
+              endTimeController: endTimeController,
             ),
           )
         ]
@@ -157,47 +125,8 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
 
   @override
   void initState() {
-    project = DataSamples.getProjectById(widget.workItem.projectID);
+    project = DataSamples.getProjectById(widget.workItem.projectId);
     super.initState();
-  }
-
-  Widget _buildWorkItemForm(BuildContext context) {
-    return ThemeForm.buildForm(
-      formKey: _formKey,
-      listViewChildren: <Widget>[
-        ThemeInput.textFormField(
-          label: 'Project',
-          enabled: false,
-          initialValue: project.name,
-          maxLines: 1
-        ),
-        ThemeInput.textFormField(
-          enabled: false,
-          label: 'Summary',
-          initialValue: widget.workItem.summary,
-        ),
-        ThemeInput.textFormField(
-          enabled: false,
-          label: 'Details',
-          initialValue: widget.workItem.details,
-          maxLines: 2,
-        ),
-        ThemeInput.dateTimeField(
-          enabled: false,
-          originalValue: widget.workItem.startTime,
-          format: DateFormat(detailedDateFormatWithSecondsString),
-          context: context,
-          label: 'started',
-        ),
-        ThemeInput.dateTimeField(
-          enabled: false,
-          originalValue: widget.workItem.endTime,
-          format: DateFormat(detailedDateFormatWithSecondsString),
-          context: context,
-          label: 'ended',
-        ),
-      ]
-    );
   }
 
   Widget _buildAppBody(BuildContext context) {
@@ -224,7 +153,11 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
           ),
           Expanded(
             flex: 4,
-            child: _buildWorkItemForm(context),
+            child: WorkItemForm(
+              workItem: widget.workItem,
+              formKey: _formKey,
+              enabled: false,
+            ),
           )
         ],
       )
@@ -233,14 +166,14 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    project = DataSamples.getProjectById(widget.workItem.projectID);
+    project = DataSamples.getProjectById(widget.workItem.projectId);
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Work Item Details'),
       appBarActions: <Widget>[
         ThemeIconButtons.buildIconButton(
           iconData: Icons.edit,
           onPressedFunc: () {
-            Routing.navigateTo(context, "${Routing.workItemEditRoute}/${widget.workItem.workItemID}");
+            Routing.navigateTo(context, "${Routing.workItemEditRoute}/${widget.workItem.workItemId}");
           }
         ),
         ThemeIconButtons.buildIconButton(
@@ -272,7 +205,7 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
 
   @override
   void initState() {
-    project = DataSamples.getProjectById(widget.workItem.projectID);
+    project = DataSamples.getProjectById(widget.workItem.projectId);
     duration = widget.workItem.endTime.difference(widget.workItem.startTime);
     super.initState();
   }
@@ -322,43 +255,9 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
           ),
           Expanded(
             flex: 4,
-            child: ThemeForm.buildForm(
+            child: WorkItemForm(
+              workItem: widget.workItem,
               formKey: _formKey,
-              listViewChildren: <Widget>[
-                ThemeInput.textFormField(
-                  label: 'Project',
-                  enabled: false,
-                  initialValue: project.name,
-                  maxLines: 1
-                ),
-                ThemeInput.textFormField(
-                  label: 'Summary',
-                  initialValue: widget.workItem.summary,
-                  validatorFunc: (val) {
-                    return null;
-                  },
-                ),
-                ThemeInput.textFormField(
-                  label: 'Details',
-                  maxLines: 2,
-                  initialValue: widget.workItem.details,
-                  validatorFunc: (val) {
-                    return null;
-                  }
-                ),
-                ThemeInput.dateTimeField(
-                  originalValue: widget.workItem.startTime,
-                  format: DateFormat(detailedDateFormatWithSecondsString),
-                  context: context,
-                  label: 'started',
-                ),
-                ThemeInput.dateTimeField(
-                  originalValue: widget.workItem.endTime,
-                  format: DateFormat(detailedDateFormatWithSecondsString),
-                  context: context,
-                  label: 'ended',
-                ),
-              ],
             ),
           )
         ]
@@ -382,12 +281,20 @@ class WorkItemCard extends StatelessWidget{
         color: Colors.grey[800],
         shape: BoxShape.rectangle,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.grey,
+            spreadRadius: 1,
+            blurRadius: 2,
+            //offset: Offset(0.0, 3.0),
+          ),
+        ],
       ),
       ///TODO: try using inkwell instead with transparency so that it hopefully gets the ink splash on press an hold
       child: FlatButton(
         padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 1),
         onPressed: () {
-          Routing.navigateTo(context, "${Routing.workItemDetailRoute}/${workItem.workItemID}");
+          Routing.navigateTo(context, "${Routing.workItemDetailRoute}/${workItem.workItemId}");
         },
         child: _buildCardContents(context),
       ),
@@ -409,14 +316,27 @@ class WorkItemCard extends StatelessWidget{
                 Expanded(
                   flex: 5,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
                         flex: 1,
-                        child: Container(
-                          child: ThemeText.commonHeaderText(workItem.summary),
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                          //color: Colors.red[600],
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: ThemeText.highlightedText(shortDurationFormat(workItem.duration)),
+                            //color: Colors.blue[500],
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 5,
+                        child: Center(
+                          child: Container(
+                            child: ThemeText.commonText("${detailedDateFormat24WithSecondsHour(workItem.startTime)} - ${shortHoursOnly24HourFormat(workItem.endTime)}"),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            //color: Colors.blue[500],
+                          ),
                         ),
                       ),
                     ],
@@ -427,25 +347,14 @@ class WorkItemCard extends StatelessWidget{
                   child: Container(
                     padding: const EdgeInsets.only(bottom: 1),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: <Widget>[
                         Expanded(
                           flex: 1,
                           child: Container(
+                            child: ThemeText.commonHeaderText(workItem.summary),
                             padding: const EdgeInsets.symmetric(horizontal: 5),
-                            child: ThemeText.highlightedText(shortDurationFormat(workItem.duration)),
-                            //color: Colors.blue[500],
-                          ),
-                        ),
-                        Expanded(
-                          flex: 5,
-                          child: Center(
-                            child: Container(
-                              child: ThemeText.commonText("${detailedDateFormat24WithSecondsHour(workItem.startTime)} - ${shortHoursOnly24HourFormat(workItem.endTime)}"),
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              //color: Colors.blue[500],
-                            ),
+                            //color: Colors.red[600],
                           ),
                         ),
                       ],
@@ -459,7 +368,12 @@ class WorkItemCard extends StatelessWidget{
             flex: 1,
             child: Align(
               alignment: Alignment.centerRight,
-              child: Icon(Icons.more_vert)
+              child: MoreOptionsPopupMenu(
+                idFieldValue: workItem.workItemId,
+                detailRouteName: Routing.workItemDetailRoute,
+                editRouteName: Routing.workItemEditRoute,
+                deleteWhat: workItem.summary,
+              )
             ),
           ),
         ],
@@ -469,11 +383,12 @@ class WorkItemCard extends StatelessWidget{
 }
 
 class WorkItemForm extends StatefulWidget {
-  WorkItemForm({@required this.workItem, @required this.formKey, this.enabled = true});
+  WorkItemForm({@required this.workItem, @required this.formKey, this.endTimeController, this.enabled = true});
 
   final GlobalKey<FormState> formKey;
   final bool enabled;
   final WorkItem workItem;
+  final TextEditingController endTimeController;
 
   _WorkItemFormState createState() => _WorkItemFormState();
 }
@@ -515,12 +430,15 @@ class _WorkItemFormState extends State<WorkItemForm> {
         ThemeInput.dateTimeField(
           enabled: widget.enabled,
           context: context,
+          format: DateFormat(detailedDateFormatWithSecondsString),
           label: 'started',
           originalValue: widget.workItem.startTime,
         ),
         ThemeInput.dateTimeField(
+          textEditingController: widget.endTimeController,
           enabled: widget.enabled,
           context: context,
+          format: DateFormat(detailedDateFormatWithSecondsString),
           label: 'completed',
           originalValue: widget.workItem.endTime,
         ),
