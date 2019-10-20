@@ -67,8 +67,8 @@ class Routing {
     }
   );
 
-  static void navigateTo(context, String route, {TransitionType transition}){
-    _router.navigateTo(context, route, transition: transition);
+  static Future navigateTo(context, String route, {TransitionType transition}){
+    return _router.navigateTo(context, route, transition: transition);
   }
 
   static void pop(BuildContext context){

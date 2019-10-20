@@ -6,7 +6,6 @@ import 'package:time_manager/common/theme.dart';
 import 'package:time_manager/common/data_utils.dart';
 import 'package:time_manager/common/routing.dart';
 import 'package:fluro/fluro.dart';
-import 'package:time_manager/common/modal_route.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flushbar/flushbar.dart';
@@ -47,27 +46,38 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
           },
         )
       ],
-      body: ProjectForm(
-        formKey: _formKey,
-        project: widget.project,
+      body: Container(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? appScaffoldBottomSheet.getHeight() : 0),
+        child: ProjectForm(
+          formKey: _formKey,
+          project: widget.project,
+          enabled: true,
+        ),
       ),
-      persistentBottomSheet: AppScaffoldBottomSheet(
-        iconData: Icons.add,
-        iconText: 'add',
-        onTapFunc: () {
-
-        }
-      )
+      persistentBottomSheet: appScaffoldBottomSheet
     );
   }
+
+  final AppScaffoldBottomSheet appScaffoldBottomSheet = AppScaffoldBottomSheet(
+    iconData: Icons.add,
+    iconText: 'add',
+    onTapFunc: () {
+
+    }
+  );
 }
 
-class ProjectDetailPage extends StatelessWidget {
+class ProjectDetailPage extends StatefulWidget {
   final Project project;
+
+  @override
+  _ProjectDetailPageState createState() => _ProjectDetailPageState();
 
   ProjectDetailPage(String id) :
       project = DataSamples.getProjectByIdString(id);
+}
 
+class _ProjectDetailPageState extends State<ProjectDetailPage> {
   final _formKey = GlobalKey<FormState>();
 
   Widget getFlushBar(BuildContext context){
@@ -98,7 +108,7 @@ class ProjectDetailPage extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(20.0), topRight: Radius.circular(20.0)),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(25.0), topRight: Radius.circular(25.0)),
       ),
       child: Column(
         children: <Widget>[
@@ -123,7 +133,7 @@ class ProjectDetailPage extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(20.0), topRight: Radius.circular(20.0)),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(25.0), topRight: Radius.circular(25.0)),
       ),
       child: Column(
         children: <Widget>[
@@ -147,7 +157,7 @@ class ProjectDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<WorkItem> _workItems = DataSamples.getAllWorkItemsForProject(project.projectId);
+    List<WorkItem> _workItems = DataSamples.getAllWorkItemsForProject(widget.project.projectId);
 
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Project Details'),
@@ -155,12 +165,13 @@ class ProjectDetailPage extends StatelessWidget {
         ThemeIconButtons.buildIconButton(
           iconData: Icons.edit,
           onPressedFunc: () {
-            Routing.navigateTo(context, "${Routing.projectEditRoute}/${project.projectId}");
+            Routing.navigateTo(context, "${Routing.projectEditRoute}/${widget.project.projectId}");
           }
         ),
         ThemeIconButtons.buildIconButton(
           iconData: Icons.delete_forever,
           onPressedFunc: () {
+            DataSamples.deleteProject(widget.project.projectId);
             Navigator.pop(context);
             //delete it I guess?
           }
@@ -168,6 +179,7 @@ class ProjectDetailPage extends StatelessWidget {
       ],
       body: SlidingUpPanel(
         maxHeight: 600,
+        minHeight: 85,
         backdropEnabled: true,
         backdropOpacity: 0.35,
         renderPanelSheet: false,
@@ -175,15 +187,22 @@ class ProjectDetailPage extends StatelessWidget {
         collapsed: _floatingCollapsed(numWorkItems: _workItems.length),
         body: ProjectForm(
           formKey: _formKey,
-          project: project,
+          project: widget.project,
         ),
       ),
       floatingActionButton: AppScaffoldFAB(
-        route: "${Routing.workItemAddRoute}/${project.projectId}",
+        route: "${Routing.workItemAddRoute}/${widget.project.projectId}",
         tooltip: 'Add a Work Item',
+        notifyParent: refresh,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
+  }
+
+  void refresh(){
+    setState(() {
+
+    });
   }
 }
 
@@ -241,11 +260,24 @@ class ProjectForm extends StatefulWidget{
   _ProjectFormState createState() => _ProjectFormState();
 }
 
-class _ProjectFormState extends State<ProjectForm>{
+class _ProjectFormState extends State<ProjectForm> with SingleTickerProviderStateMixin{
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
+  }
+
+  @override
+  void dispose(){
+    priorityNode.dispose();
+    applicationNode.dispose();
+    statusNode.dispose();
+    nameNode.dispose();
+    detailsNode.dispose();
+    startedTimeNode.dispose();
+    completedTimeNode.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -256,6 +288,14 @@ class _ProjectFormState extends State<ProjectForm>{
     );
   }
 
+  final FocusNode priorityNode = new FocusNode();
+  final FocusNode applicationNode = new FocusNode();
+  final FocusNode statusNode = new FocusNode();
+  final FocusNode nameNode = new FocusNode();
+  final FocusNode detailsNode = new FocusNode();
+  final FocusNode startedTimeNode = new FocusNode();
+  final FocusNode completedTimeNode = new FocusNode();
+
   Widget _buildProjectForm({BuildContext context, bool enabled}) {
     return ThemeForm.buildForm(
       formKey: widget.formKey,
@@ -263,47 +303,74 @@ class _ProjectFormState extends State<ProjectForm>{
         ThemeInput.intFormField(
           enabled: widget.enabled,
           label: 'priority',
-          initialValue: widget.project.priority?.toString() ?? "9999",
+          initialValue: widget.project.priority?.toString(),
+          textInputAction: TextInputAction.next,
+          context: context,
+          currentFocusNode: priorityNode,
+          nextFocusNode: applicationNode,
         ),
-        ThemeForm.buildFormRowFromFields(
-          children: <Widget>[
-            ThemeForm.buildFormFieldDropdown(
-              enabled: enabled,
-              labelText: 'application',
-              value: widget.project.applicationId?.toString() ?? "n/a",
-              options: ApplicationNames.options,
-            ),
-            ThemeForm.buildFormFieldDropdown(
-              enabled: enabled,
-              labelText: 'status',
-              value: widget.project.status ?? "n/a",
-              options: StatusTypes.options,
-            ),
-          ]
+        ThemeForm.buildFormFieldDropdown(
+          enabled: enabled,
+          labelText: 'application',
+          value: widget.project.applicationId == null
+            ? ApplicationNames.options.entries.first
+            : ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key,
+          options: ApplicationNames.options.keys.toList(),
+          onChangedFunc: (String value) {
+            setState(() {
+              widget.project.applicationId = ApplicationNames.options[value];
+            });
+          }
+        ),
+        ThemeForm.buildFormFieldDropdown(
+          enabled: enabled,
+          labelText: 'status',
+          value: widget.project.statusTypeId == null
+            ? StatusTypes.options.entries.first.key
+            : StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key,
+          options: StatusTypes.options.keys.toList(),
+          onChangedFunc: (String value) {
+            setState(() {
+              widget.project.statusTypeId = StatusTypes.options[value];
+            });
+          }
         ),
         ThemeInput.textFormField(
           enabled: enabled,
           label: 'Name',
-          initialValue: widget.project.name ?? "n/a",
+          initialValue: widget.project.name,
+          textInputAction: TextInputAction.next,
+          currentFocusNode: nameNode,
+          nextFocusNode: detailsNode,
+          context: context,
         ),
         ThemeInput.textFormField(
           enabled: enabled,
           label: 'Details',
-          initialValue: widget.project.details ?? "n/a",
+          initialValue: widget.project.details,
+          textInputAction: TextInputAction.next,
+          currentFocusNode: detailsNode,
+          nextFocusNode: startedTimeNode,
+          context: context,
           maxLines: 2,
         ),
         ThemeInput.dateTimeField(
+          textInputAction: TextInputAction.next,
           enabled: enabled,
           context: context,
+          currentFocusNode: startedTimeNode,
+          nextFocusNode: completedTimeNode,
           label: 'started',
           originalValue: widget.project.startedTime,
           format: DateFormat(detailedDateFormatWithSecondsString),
         ),
         ThemeInput.dateTimeField(
+          textInputAction: TextInputAction.done,
           enabled: enabled,
           context: context,
+          currentFocusNode: completedTimeNode,
           label: 'completed',
-          originalValue: widget.project.completedTime,
+          originalValue: widget.project.completedTime ?? DateTime(2999),
           format: DateFormat(detailedDateFormatWithSecondsString),
         ),
         ThemeForm.buildFormRowFromFields(

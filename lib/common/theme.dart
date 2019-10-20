@@ -4,6 +4,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:time_manager/common/data_utils.dart';
+import 'package:flutter/services.dart';
 
 class ThemeColors{
   const ThemeColors();
@@ -143,6 +144,11 @@ class ThemeText {
 class ThemeInput {
   const ThemeInput();
 
+  static _fieldFocusChange(BuildContext context, FocusNode currentFocusNode,FocusNode nextFocusNode) {
+    currentFocusNode.unfocus();
+    FocusScope.of(context).requestFocus(nextFocusNode);
+  }
+
   static Container _inputContainer({Widget child}) {
     return Container(
       margin: const EdgeInsets.all(2),
@@ -213,14 +219,21 @@ class ThemeInput {
   }
 
   static Container dateTimeField({BuildContext context, DateFormat format, DateTime originalValue, String label, bool enabled = true,
-    Function(DateTime) onChangedFunc, TextEditingController textEditingController}) {
+    Function(DateTime) onChangedFunc, TextEditingController textEditingController, TextInputAction textInputAction, FocusNode currentFocusNode,
+    FocusNode nextFocusNode, FormFieldValidator<DateTime> validatorFunc}) {
     return _inputContainer(
       child: DateTimeField(
+        focusNode: currentFocusNode,
+        textInputAction: textInputAction,
+        onFieldSubmitted: (_) {
+          _fieldFocusChange(context, currentFocusNode, nextFocusNode);
+        },
+        validator: validatorFunc,
         enabled: enabled,
         controller: textEditingController,
         style: ThemeTextStyles.formText,
         decoration: inputDecoration(label),
-        initialValue: originalValue ?? "",
+        initialValue: originalValue,
         format: format ?? DateFormat(detailedDateFormatString), //DateFormat(detailedDateFormatWithSecondsString),
         onChanged: onChangedFunc,
         onShowPicker: (context, currentValue) async {
@@ -244,17 +257,27 @@ class ThemeInput {
     );
   }
 
-  static Container intFormField({String label, String initialValue, FormFieldValidator<String> validatorFunc, bool enabled = true}) {
+  static Container intFormField({String label, String initialValue, FormFieldValidator<String> validatorFunc, bool enabled = true,
+    BuildContext context, FocusNode currentFocusNode, FocusNode nextFocusNode, TextInputAction textInputAction, TextInputType textInputType}) {
     return _inputContainer(
       child: TextFormField(
         style: ThemeTextStyles.formText,
         initialValue: initialValue ?? "",
+        textInputAction: textInputAction,
         validator: validatorFunc,
+        focusNode: currentFocusNode,
         enabled: enabled,
         maxLines: 1,
+        keyboardType: textInputType,
         cursorColor: ThemeColors.highlightedData,
         decoration: inputDecoration(label),
-        keyboardType: TextInputType.number,
+        inputFormatters: [
+          WhitelistingTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(3),
+        ],
+        onFieldSubmitted: (_) {
+          _fieldFocusChange(context, currentFocusNode, nextFocusNode);
+        },
       )
     );
   }
@@ -283,17 +306,25 @@ class ThemeInput {
     );
   }
 
-  static Container textFormField({@required String label, String initialValue, FormFieldValidator<String> validatorFunc,
-    bool enabled = true, int maxLines}) {
+  static Container textFormField({@required String label, String initialValue, FormFieldValidator<String> validatorFunc, bool enabled = true,
+    int maxLines = 1, BuildContext context, FocusNode currentFocusNode, FocusNode nextFocusNode, TextInputAction textInputAction,
+    TextInputType textInputType, TextEditingController controller}) {
     return _inputContainer(
       child: TextFormField(
+        controller: controller,
         style: ThemeTextStyles.formText,
-        initialValue: initialValue ?? '',
+        initialValue: initialValue,
         validator: validatorFunc,
         enabled: enabled,
-        maxLines: maxLines ?? 1,
+        maxLines: maxLines,
         cursorColor: ThemeColors.highlightedData,
-        decoration: inputDecoration(label)
+        decoration: inputDecoration(label),
+        textInputAction: textInputAction,
+        keyboardType: textInputType ?? maxLines > 1 ? TextInputType.multiline : TextInputType.text,
+        focusNode: currentFocusNode,
+        onFieldSubmitted: (_) {
+          _fieldFocusChange(context, currentFocusNode, nextFocusNode);
+        },
       ),
     );
   }
@@ -331,11 +362,18 @@ class ThemeInput {
 class ThemeForm {
   const ThemeForm();
 
-  static Widget buildFormFieldDropdown({String labelText, String value, ValueChanged<String> onChangedFunc, List<String> options, bool enabled = true}) {
+  static Widget buildFormFieldDropdown({String labelText, String value, ValueChanged<String> onChangedFunc, List<String> options,
+    bool enabled = true}) {
     OutlineInputBorder outlineInputBorder = OutlineInputBorder(
-      borderSide: BorderSide(color: ThemeColors.unselectedButtonColor));
+      borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
+    );
 
-    return FormField(
+    /*return TextFormField(
+      enabled: enabled,
+
+    );*/
+
+    return FormField<String>(
       enabled: enabled,
       builder: (FormFieldState state) {
         return Container(
@@ -360,6 +398,8 @@ class ThemeForm {
     );
   }
 
+
+
   static Widget buildFormRowFromFields({Iterable<Widget> children}){
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
@@ -376,11 +416,10 @@ class ThemeForm {
 
   static Widget buildForm({@required GlobalKey<FormState> formKey, @required List<Widget> listViewChildren}){
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       color: ThemeColors.card,
       child: Form(
         key: formKey,
-        autovalidate: true,
         child: Theme(
           data: ThemeData(
             primaryColor: ThemeColors.highlightedData,
@@ -392,11 +431,12 @@ class ThemeForm {
               return listViewChildren[index];
             },
             separatorBuilder: (BuildContext context, int index){
-              return Divider(height: 5);
+              return Divider(height: 6);
             },
             itemCount: listViewChildren.length,
           ),
-        )),
+        ),
+      ),
     );
   }
 }

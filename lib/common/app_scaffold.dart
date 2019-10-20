@@ -13,7 +13,7 @@ class AppScaffold extends StatelessWidget {
       this.floatingActionButtonLocation = FloatingActionButtonLocation.endFloat,
       this.bottomNavigationBar,
       this.persistentBottomSheet,
-      this.resizeToAvoidBottomInset = false});
+      this.resizeToAvoidBottomInset});
 
   final Widget appBarTitle;
   final List<Widget> appBarActions;
@@ -88,13 +88,18 @@ class AppScaffoldBottomSheet extends StatelessWidget {
       ],
     );
   }
+
+  double getHeight(){
+    return this.height;
+  }
 }
 
 class AppScaffoldFAB extends StatefulWidget {
-  AppScaffoldFAB({Key key, @required this.route, this.tooltip}) : super(key: key);
+  AppScaffoldFAB({Key key, @required this.route, this.tooltip, this.notifyParent}) : super(key: key);
 
   final String route;
   final String tooltip;
+  final Function() notifyParent;
 
   //combine this with a bottom navigation bar in a bottomAppBar for a notch in the bottom bar
   final floatingActionButtonLocation =
@@ -111,7 +116,9 @@ class _AppScaffoldFABState
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: () => setState(() {
-        Routing.navigateTo(context, widget.route, transition: TransitionType.inFromRight);
+        Routing.navigateTo(context, widget.route, transition: TransitionType.inFromRight)..then((val){
+          widget.notifyParent();
+        });
       }),
       tooltip: widget.tooltip,
       child: Icon(

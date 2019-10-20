@@ -1,10 +1,10 @@
+import 'dart:collection';
+
 import 'package:time_manager/model/common/abstracts.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:time_manager/common/lite_database.dart';
-import 'package:time_manager/model/common/abstracts.dart';
-import 'package:time_manager/model/common/abstracts.dart';
-import 'package:time_manager/model/common/abstracts.dart';
+import 'package:time_manager/model/data_samples.dart';
 
 WorkItem workItemFromJson(String str) => WorkItem.fromJson(json.decode(str));
 String workItemToJson(WorkItem data) => json.encode(data.toJson());
@@ -39,7 +39,7 @@ class WorkItem implements Data{
   }
 
   WorkItem.create({@required this.workItemId, @required this.startTime, @required this.projectId, @required this.summary,
-    @required this.details, this.endTime}) {
+    @required this.details, @required this.endTime}) {
     this.createdTime = DateTime.now();
     this.updatedTime = this.createdTime;
     this.duration = this.endTime.difference(this.startTime);
@@ -232,7 +232,7 @@ class Project implements Data {
   String name;
   String details;
   int priority;
-  String status;
+  int statusTypeId;
   DateTime startedTime;
   DateTime completedTime;
   Duration totalHours;
@@ -245,7 +245,7 @@ class Project implements Data {
     this.name,
     this.details,
     this.priority,
-    this.status,
+    this.statusTypeId,
     this.startedTime,
     this.completedTime,
     this.totalHours,
@@ -255,11 +255,14 @@ class Project implements Data {
 
   Project.newProject({@required this.applicationId}){
     DateTime createdTime = DateTime.now();
-    this.priority = 999;
+    this.startedTime = createdTime;
     this.createdTime = createdTime;
+    this.statusTypeId = 2;
+    this.applicationId = applicationId;
+    this.priority = 999;
   }
 
-  Project._({@required this.projectId, @required this.applicationId, @required this.name, @required this.details, @required this.status,
+  Project._({@required this.projectId, @required this.applicationId, @required this.name, @required this.details, @required this.statusTypeId,
     this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime, this.priority, this.categoryId});
 
   /*factory Project(int projectId, int applicationId, String name, String details, {Duration totalHours = const Duration(hours: 11, minutes: 38),
@@ -279,7 +282,7 @@ class Project implements Data {
     name: json["name"],
     details: json["details"],
     priority: json["priority"],
-    status: json["status"],
+    statusTypeId: json["statusTypeId"],
     startedTime: json["startedTime"],
     completedTime: json["completedTime"],
     totalHours: json["totalHours"],
@@ -293,7 +296,7 @@ class Project implements Data {
     "name": name,
     "details": details,
     "priority": priority,
-    "status": status,
+    "statusTypeId": statusTypeId,
     "startedTime": startedTime,
     "completedTime": completedTime,
     "totalHours": totalHours,
@@ -359,22 +362,100 @@ class Project implements Data {
 }
 
 class StatusTypes {
-  static const String assigned = "Assigned";
-  static const String available = "Available";
-  static const String finished = "Finished";
-  static const String voided = "Voided";
-  static const options = ["Select an Option", assigned, available, finished, voided];
+  static Map<String, int> options = Map.fromIterable(DataSamples.statusTypes,
+    key: (st) => st.name,
+    value: (st) => st.statusTypeId);
 }
 
 class ApplicationNames {
-  static const String timeManager = "Time Manager";
-  static const String jodeler = "Jodeler";
-  static const String webScraper = "Web Scraper";
-  static const String packageDrop = 'Package Drop';
-  static const String liveItUp = "Live It Up";
-  static const String dataStructures = "Data Structures";
-  static const String workoutApp = "Workout App";
-  static const options = ["Select an Option", timeManager, jodeler, webScraper, packageDrop, liveItUp, dataStructures, workoutApp];
+  static Map<String, int> options = Map.fromIterable(DataSamples.applications,
+    key: (app) => app.name,
+    value: (app) => app.applicationId);
+}
+
+StatusType statusTypeFromJson(String str) => StatusType.fromJson(json.decode(str));
+String statusTypeToJson(StatusType data) => json.encode(data.toJson());
+
+class StatusType implements Data {
+  int statusTypeId;
+  DateTime createdTime;
+  DateTime updatedTime;
+  String name;
+
+  StatusType({
+    this.statusTypeId,
+    this.createdTime,
+    this.updatedTime,
+    this.name,
+  });
+
+  static StatusType fromJson(Map<String, dynamic> json) => StatusType(
+    statusTypeId: json["statusTypeId"],
+    createdTime: json["createdTime"],
+    updatedTime: json["updatedTime"],
+    name: json["name"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "statusTypeId": statusTypeId,
+    "createdTime": createdTime,
+    "updatedTime": updatedTime,
+    "name": name,
+  };
+
+  @override
+  bool save() {
+    // TODO: implement save
+    return null;
+  }
+
+  @override
+  T read<T>() {
+    // TODO: implement read
+    return null;
+  }
+
+  @override
+  bool update() {
+    // TODO: implement update
+    return null;
+  }
+
+  @override
+  bool delete() {
+    // TODO: implement delete
+    return null;
+  }
+
+  @override
+  Future<int> sqlLiteInsert() {
+    // TODO: implement sqlLiteInsert
+    return null;
+  }
+
+  @override
+  Future<T> sqlLiteSelect<T>() {
+    // TODO: implement sqlLiteSelect
+    return null;
+  }
+
+  @override
+  Future<List<T>> sqlLiteSelectAll<T>() {
+    // TODO: implement sqlLiteSelectAll
+    return null;
+  }
+
+  @override
+  Future<int> sqlLiteUpdate() {
+    // TODO: implement sqlLiteUpdate
+    return null;
+  }
+
+  @override
+  Future<int> sqlLiteDelete() {
+    // TODO: implement sqlLiteDelete
+    return null;
+  }
 }
 
 Filter filterFromJson(String str) => Filter.fromJson(json.decode(str));
@@ -388,7 +469,7 @@ class Filter implements Data {
   bool isDefault;
   bool isDescending;
   String name;
-  String status;
+  int statusTypeId;
 
   Filter({
     this.filterId,
@@ -398,11 +479,11 @@ class Filter implements Data {
     this.isDefault,
     this.isDescending,
     this.name,
-    this.status,
+    this.statusTypeId,
   });
 
   Filter._({@required this.filterId, @required this.isDefault, @required this.isDescending, @required this.name,
-    this.createdTime, this.updatedTime, this.filterXml, this.status});
+    this.createdTime, this.updatedTime, this.filterXml, this.statusTypeId});
 
   /*factory Filter(int filterID, String name, bool isDefault, bool isDescending, {status = StatusTypes.available}){
     DateTime createdTime = DateTime.now();
@@ -418,7 +499,7 @@ class Filter implements Data {
     isDefault: json["isDefault"],
     isDescending: json["isDescending"],
     name: json["name"],
-    status: json["status"],
+    statusTypeId: json["status"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -429,7 +510,7 @@ class Filter implements Data {
     "isDefault": isDefault,
     "isDescending": isDescending,
     "name": name,
-    "status": status,
+    "statusTypeId": statusTypeId,
   };
 
   Filter.fromFilter(Filter filter) :
@@ -440,7 +521,7 @@ class Filter implements Data {
     this.isDefault = filter.isDefault,
     this.isDescending = filter.isDescending,
     this.name = filter.name,
-    this.status = filter.status;
+    this.statusTypeId = filter.statusTypeId;
 
   @override
   bool save() {

@@ -20,6 +20,34 @@ String detailedDateFormatWithSeconds(DateTime dateTime) {
   return DateFormat(detailedDateFormatWithSecondsString).format(dateTime);
 }
 
+String reformatDetailedDateFormatWithSecondsString(String input){
+  String month = input.substring(0, 2);
+  String day = input.substring(3 ,5);
+  String year = input.substring(6, 10);
+
+  int hour = int.parse(input.substring(11, 13));
+  String minute = input.substring(14, 16);
+  String second = input.substring(17, 19);
+
+  String time = input.substring(20, 22);
+
+  if(time == "PM"){
+    hour += 12;
+  }
+
+  String hourString = '0';
+  if(time.length == 1){
+    hourString += time;
+  }
+  else{
+    hourString = "$hour";
+  }
+
+  String reformattedString = "$year-$month-$day $hourString:$minute:$second";
+
+  return reformattedString;
+}
+
 const String detailedDateFormat24HourWithSecondsString = "MM/dd/yyyy HH:mm:ss";
 String detailedDateFormat24WithSecondsHour(DateTime dateTime) {
   return DateFormat(detailedDateFormat24HourWithSecondsString).format(dateTime);
@@ -84,5 +112,26 @@ String _ensureTwoDigits(int amount){
     return '0$amount';
   }else{
     return amount.toString();
+  }
+}
+
+String baseValidatorLengthValidation({String val = '', String fieldName = '', int maxLength = 0}){
+  if(val.isEmpty){
+    return '$fieldName is required';
+  }
+  else if(maxLength != 0 && val.length > maxLength){
+    return '$fieldName must be less than $maxLength characters';
+  }
+  else{
+    return null;
+  }
+}
+
+String baseValidatorDateTimeRequiredValidation({DateTime val, String fieldName = ''}){
+  if(val == null){
+    return '$fieldName is required';
+  }
+  else{
+    return null;
   }
 }

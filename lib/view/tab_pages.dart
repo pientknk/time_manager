@@ -19,7 +19,7 @@ class CurrentProjectsTab extends StatefulWidget {
 
 class _CurrentProjectsTabState extends State<CurrentProjectsTab> {
   static final _projects = DataSamples.projects;
-  static final _filters = DataSamples.getFilters().toList(growable: false);
+  static final _filters = DataSamples.filters;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class AvailableProjectsTab extends StatefulWidget {
 
 class _AvailableProjectsTabState extends State<AvailableProjectsTab> {
   static final _projects = DataSamples.projects;
-  static final _filters = DataSamples.getFilters().toList(growable: false);
+  static final _filters = DataSamples.filters;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +51,7 @@ class CompletedProjectsTab extends StatefulWidget {
 
 class _CompletedProjectsTabState extends State<CompletedProjectsTab> {
   static final _projects = DataSamples.projects;
-  static final _filters = DataSamples.getFilters().toList(growable: false);
+  static final _filters = DataSamples.filters;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +83,7 @@ class TabWidgets{
           ? pr1.name.compareTo(pr2.name)
           : pr2.name.compareTo(pr1.name));
 
-    final filteredProjects = projects.where((pr) => pr.status == filter.status).toList(growable: false);
+    final filteredProjects = projects.where((pr) => pr.statusTypeId == filter.statusTypeId).toList(growable: false);
 
     if(filteredProjects.isEmpty){
       return Container(

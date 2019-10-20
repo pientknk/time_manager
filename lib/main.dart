@@ -25,14 +25,22 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown,
     ]);
 
-    return MaterialApp(
-      title: 'Time Manager',
-      theme: ThemeData(
-        cursorColor: Colors.green,
-        fontFamily: 'Livvic',
+    return GestureDetector(
+      onTap: (){
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if(!currentFocus.hasPrimaryFocus){
+          currentFocus.unfocus();
+        }
+      },
+      child: MaterialApp(
+        title: 'Time Manager',
+        theme: ThemeData(
+          cursorColor: Colors.green,
+          fontFamily: 'Livvic',
+        ),
+        ///can't have an InitialRoute and a home property
+        home: MainPage(title: 'Time Manager')
       ),
-      ///can't have an InitialRoute and a home property
-      home: MainPage(title: 'Time Manager')
     );
   }
 }
