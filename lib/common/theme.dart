@@ -5,6 +5,8 @@ import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:time_manager/common/data_utils.dart';
 import 'package:flutter/services.dart';
+import 'package:time_manager/view/options_page.dart';
+import 'package:time_manager/model/common/abstracts.dart';
 
 class ThemeColors{
   const ThemeColors();
@@ -54,26 +56,30 @@ class ThemeTextStyles{
     color: ThemeColors.mainText,
   );
 
-  static const TextStyle headerText = const TextStyle(
-    fontFamily: mainFont,
-    fontSize: 25,
-    fontWeight: FontWeight.bold,
-    color: ThemeColors.headerText,
-  );
+  static TextStyle headerText(Color color){
+    return TextStyle(
+      fontFamily: mainFont,
+      fontSize: 25,
+      fontWeight: FontWeight.bold,
+      color: color ?? ThemeColors.headerText,
+    );
+  }
 
   static const TextStyle commonText = const TextStyle(
     fontFamily: mainFont,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: FontWeight.w300,
     color: ThemeColors.mainText,
   );
 
-  static const TextStyle commonBoldText = const TextStyle(
-    fontFamily: mainFont,
-    fontSize: 18,
-    fontWeight: FontWeight.w500,
-    color: ThemeColors.mainText,
-  );
+  static TextStyle commonBoldText(Color color){
+    return TextStyle(
+      fontFamily: mainFont,
+      fontSize: 18,
+      fontWeight: FontWeight.w500,
+      color: color ?? ThemeColors.mainText,
+    );
+  }
 }
 
 class ThemeText {
@@ -85,9 +91,9 @@ class ThemeText {
     );
   }
 
-  static AutoSizeText headerText(String text) {
+  static AutoSizeText headerText({@required String text, Color color}) {
     return AutoSizeText(text,
-      style: ThemeTextStyles.headerText,
+      style: ThemeTextStyles.headerText(color),
       maxLines: 2,
       minFontSize: 18,
       textAlign: TextAlign.left,
@@ -107,9 +113,19 @@ class ThemeText {
     );
   }
 
-  static AutoSizeText commonHeaderText(String text) {
+  static Text commonTextMultiline(String text){
+    return Text(text,
+      style: ThemeTextStyles.commonText,
+      maxLines: 2,
+      textAlign: TextAlign.left,
+      semanticsLabel: 'n/a',
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  static AutoSizeText commonHeaderText({@required String text, Color color}) {
     return AutoSizeText(text,
-      style: ThemeTextStyles.commonBoldText,
+      style: ThemeTextStyles.commonBoldText(color),
       maxLines: 2,
       minFontSize: 16,
       textAlign: TextAlign.left,
@@ -220,9 +236,10 @@ class ThemeInput {
 
   static Container dateTimeField({BuildContext context, DateFormat format, DateTime originalValue, String label, bool enabled = true,
     Function(DateTime) onChangedFunc, TextEditingController textEditingController, TextInputAction textInputAction, FocusNode currentFocusNode,
-    FocusNode nextFocusNode, FormFieldValidator<DateTime> validatorFunc}) {
+    FocusNode nextFocusNode, FormFieldValidator<DateTime> validatorFunc, FormFieldSetter<DateTime> onSavedFunc}) {
     return _inputContainer(
       child: DateTimeField(
+        onSaved: onSavedFunc,
         focusNode: currentFocusNode,
         textInputAction: textInputAction,
         onFieldSubmitted: (_) {
@@ -257,12 +274,13 @@ class ThemeInput {
     );
   }
 
-  static Container intFormField({String label, String initialValue, FormFieldValidator<String> validatorFunc, bool enabled = true,
-    BuildContext context, FocusNode currentFocusNode, FocusNode nextFocusNode, TextInputAction textInputAction, TextInputType textInputType}) {
+  static Container intFormField({String label, FormFieldValidator<String> validatorFunc, bool enabled = true,
+    BuildContext context, FocusNode currentFocusNode, FocusNode nextFocusNode, TextInputAction textInputAction, TextInputType textInputType,
+    TextEditingController controller}) {
     return _inputContainer(
       child: TextFormField(
+        controller: controller,
         style: ThemeTextStyles.formText,
-        initialValue: initialValue ?? "",
         textInputAction: textInputAction,
         validator: validatorFunc,
         focusNode: currentFocusNode,
@@ -279,6 +297,62 @@ class ThemeInput {
           _fieldFocusChange(context, currentFocusNode, nextFocusNode);
         },
       )
+    );
+  }
+  
+  static Container optionsSelector<T>({@required Options initialValue, String label, FormFieldValidator<String> validatorFunc,
+    @required TextEditingController controller, @required BuildContext context, String title, List<Options> options}){
+    OptionsPage optionsPage = OptionsPage(
+      options: options,
+      title: title,
+      selectedOption: initialValue,
+    );
+    return _inputContainer(
+      child: TextFormField(
+        controller: controller,
+        style: ThemeTextStyles.formText,
+        validator: validatorFunc,
+        enabled: true,
+        maxLines: 1,
+        cursorColor: ThemeColors.highlightedData,
+        decoration: inputDecoration(label),
+        onTap: (){
+          Navigator.push(context, MaterialPageRoute(builder:
+            (context) => optionsPage
+            )
+          )..then((val){
+            controller.text = optionsPage.selectedOption.name;
+            //controller.text = initialValue == null ? "" : initialValue.name;
+          });
+        },
+      ),
+
+      /*Card(
+        elevation: 8.0,
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+        child: Container(
+          decoration: BoxDecoration(color: Color.fromRGBO(64, 75, 96, .9)),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+            leading: Container(
+              padding: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                border: Border(right: BorderSide(width: 1, color: Colors.white24))),
+              child: Icon(Icons.description, color: ThemeColors.highlightedData,),
+            ),
+            title: Text("Option",
+              style: ThemeTextStyles.commonText,
+            ),
+            subtitle: Row(
+              children: <Widget>[
+                Icon(Icons.linear_scale),
+                Text("More info about this"),
+              ],
+            ),
+            trailing: Icon(Icons.accessibility, color: ThemeColors.highlightedData,),
+          ),
+        ),
+      )*/
     );
   }
 
@@ -320,7 +394,6 @@ class ThemeInput {
         cursorColor: ThemeColors.highlightedData,
         decoration: inputDecoration(label),
         textInputAction: textInputAction,
-        keyboardType: textInputType ?? maxLines > 1 ? TextInputType.multiline : TextInputType.text,
         focusNode: currentFocusNode,
         onFieldSubmitted: (_) {
           _fieldFocusChange(context, currentFocusNode, nextFocusNode);
@@ -367,11 +440,6 @@ class ThemeForm {
     OutlineInputBorder outlineInputBorder = OutlineInputBorder(
       borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
     );
-
-    /*return TextFormField(
-      enabled: enabled,
-
-    );*/
 
     return FormField<String>(
       enabled: enabled,

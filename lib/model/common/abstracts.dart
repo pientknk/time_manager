@@ -1,6 +1,3 @@
-import 'package:flutter/material.dart';
-import 'dart:io';
-
 abstract class Data {
   bool save();
   T read<T>();
@@ -12,6 +9,11 @@ abstract class Data {
   Future<List<T>> sqlLiteSelectAll<T>();
   Future<int> sqlLiteUpdate();
   Future<int> sqlLiteDelete();
+}
+
+abstract class Options {
+  String name;
+  String description;
 }
 
 

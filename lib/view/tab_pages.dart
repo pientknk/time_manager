@@ -3,10 +3,6 @@ import 'package:time_manager/model/data.dart';
 import 'package:time_manager/model/data_samples.dart';
 import 'package:time_manager/common/theme.dart';
 import 'package:time_manager/view/project_page.dart';
-import 'package:time_manager/common/routing.dart';
-import 'package:fluro/fluro.dart';
-import 'package:time_manager/common/data_utils.dart';
-import 'package:time_manager/common/app_scaffold.dart';
 import 'package:time_manager/common/app_custom_scroll_view.dart';
 
 class CurrentProjectsTab extends StatefulWidget {
@@ -92,7 +88,7 @@ class TabWidgets{
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Center(
-              child: ThemeText.headerText('No Records'),
+              child: ThemeText.headerText(text: 'No Records'),
             )
           ],
         ),

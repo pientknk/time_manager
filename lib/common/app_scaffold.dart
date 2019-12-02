@@ -95,7 +95,7 @@ class AppScaffoldBottomSheet extends StatelessWidget {
 }
 
 class AppScaffoldFAB extends StatefulWidget {
-  AppScaffoldFAB({Key key, @required this.route, this.tooltip, this.notifyParent}) : super(key: key);
+  AppScaffoldFAB({Key key, @required this.route, this.tooltip, @required this.notifyParent}) : super(key: key);
 
   final String route;
   final String tooltip;

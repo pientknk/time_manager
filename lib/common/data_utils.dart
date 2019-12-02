@@ -25,25 +25,21 @@ String reformatDetailedDateFormatWithSecondsString(String input){
   String day = input.substring(3 ,5);
   String year = input.substring(6, 10);
 
-  int hour = int.parse(input.substring(11, 13));
+  String hour = input.substring(11, 13);
   String minute = input.substring(14, 16);
   String second = input.substring(17, 19);
 
   String time = input.substring(20, 22);
 
+
   if(time == "PM"){
-    hour += 12;
+    int hourVal = int.parse(hour);
+    hourVal += 12;
+
+    hour = hourVal.toString();
   }
 
-  String hourString = '0';
-  if(time.length == 1){
-    hourString += time;
-  }
-  else{
-    hourString = "$hour";
-  }
-
-  String reformattedString = "$year-$month-$day $hourString:$minute:$second";
+  String reformattedString = "$year-$month-$day $hour:$minute:$second";
 
   return reformattedString;
 }
@@ -133,5 +129,17 @@ String baseValidatorDateTimeRequiredValidation({DateTime val, String fieldName =
   }
   else{
     return null;
+  }
+}
+
+String ensureValue({@required String value, String defaultValue}){
+  if(value != null){
+    return value;
+  }
+  else if(defaultValue != null){
+    return defaultValue;
+  }
+  else{
+    return "";
   }
 }

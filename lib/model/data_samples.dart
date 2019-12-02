@@ -27,39 +27,55 @@ class DataSamples{
   static List<Project> projects = [];
   static Iterable<Project> _getProjects(){
     return [
-      Project(projectId: 1, applicationId: 1, name: 'This is my first project yo', details: 'Since this is my first project I should probly do something',
+      Project(projectId: 1, applicationId: 1, name: 'This is my first project yo', description: 'Since this is my first project I should probly do something',
         priority: 23, workItemCount: 23, totalHours: Duration(hours: 9, minutes: 23), statusTypeId: 1,
       startedTime: DateTime.now(), completedTime: DateTime(2999)),
-      Project(projectId: 2, applicationId: 1, name: 'This is a second project so this is good', details: 'wow I can\'t believe this is my second project',
+      Project(projectId: 2, applicationId: 1, name: 'This is a second project so this is good', description: 'wow I can\'t believe this is my second project',
         priority: 12, workItemCount: 1, totalHours: Duration(hours: 1, minutes: 1), statusTypeId: 1,
       startedTime: DateTime.now(), completedTime: DateTime(2999)),
-      Project(projectId: 3, applicationId: 1, name: 'Oof third project is a lot of work', details: 'Can I go home?',
+      Project(projectId: 3, applicationId: 1, name: 'Oof third project is a lot of work', description: 'Can I go home?',
         priority: 1, workItemCount: 15, totalHours: Duration(hours: 3, minutes: 0), statusTypeId: 2,
       startedTime: DateTime.now(), completedTime: DateTime(2999)),
-      Project(projectId: 4, applicationId: 1, name: 'Now this is just a lot of work', details: 'Since this is a lot of work I must be making a lot of prorgress',
+      Project(projectId: 4, applicationId: 1, name: 'Now this is just a lot of work', description: 'Since this is a lot of work I must be making a lot of prorgress',
         priority: 3, workItemCount: 9, totalHours: Duration(hours: 2, minutes: 58), statusTypeId: 3,
       startedTime: DateTime.now(), completedTime: DateTime(2999)),
-      Project(projectId: 5, applicationId: 1, name: 'What if this was like the 5th project?', details: '5 projects is a lot man, what should i do now?',
+      Project(projectId: 5, applicationId: 1, name: 'What if this was like the 5th project?', description: '5 projects is a lot man, what should i do now?',
         priority: 9, workItemCount: 123, totalHours: Duration(hours: 127, minutes: 59), statusTypeId: 3,
       startedTime: DateTime.now(), completedTime: DateTime(2999)),
-      Project(projectId: 6, applicationId: 1, name: 'Time manager should work', details: 'yeah lets make time manager work this time instead of bailing out',
+      Project(projectId: 6, applicationId: 1, name: 'Time manager should work', description: 'yeah lets make time manager work this time instead of bailing out',
         priority: 11, workItemCount: 12, totalHours: Duration(hours: 7, minutes: 59), statusTypeId: 2,
       startedTime: DateTime.now(), completedTime: DateTime(2999)),
     ];
   }
-  static bool addProject({int applicationId, String name, String details, int statusTypeId = 2}){
+  static bool addProjectByFields({int applicationId, String name, String details, int statusTypeId, DateTime startTime, DateTime completeTime}){
     projects.sort((pr1, pr2) => pr1.projectId.compareTo(pr2.projectId));
     int highestId = projects.last.projectId;
 
     int projectLength = projects.length;
-    projects.add(Project(projectId: ++highestId, applicationId: applicationId, name: name, details: details,
-      workItemCount: 5, totalHours: Duration(hours: 12, minutes: 34), statusTypeId: statusTypeId));
+    projects.add(Project(projectId: ++highestId, applicationId: applicationId, name: name, description: details,
+      workItemCount: 0, totalHours: Duration(hours: 0, minutes: 0), statusTypeId: statusTypeId, startedTime: startTime, completedTime: completeTime));
 
     if(projectLength != projects.length){
       return true;
     }
 
     return false;
+  }
+  static bool addProject(Project project){
+    if(project.applicationId == null || project.name == null || project.description == null
+      || project.startedTime == null || project.completedTime == null || project.statusTypeId == null){
+      return false;
+    }
+    else{
+      return addProjectByFields(
+        applicationId: project.applicationId,
+        name: project.name,
+        details: project.description,
+        statusTypeId: project.statusTypeId,
+        startTime: project.startedTime,
+        completeTime: project.completedTime,
+      );
+    }
   }
   static bool deleteProject(int projectID){
     int projectLength = projects.length;
@@ -317,4 +333,12 @@ class DataSamples{
     return DataSamples.getApplicationById(int.parse(applicationId));
   }
 
+  static List<ProjectType> projectTypes = [];
+  static Iterable<ProjectType> _getProjectTypes(){
+    return [
+      ProjectType(projectTypeId: 1, name: "None", description: "Default value for project types"),
+      ProjectType(projectTypeId: 2, name: "Enhancement", description: "An improvement in functionaliy or quality"),
+      ProjectType(projectTypeId: 3, name: "Feature", description: "A piece of functionality that delivers business value"),
+    ];
+  }
 }

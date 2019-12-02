@@ -53,23 +53,7 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
       iconData: Icons.add,
       iconText: 'add',
       onTapFunc: () {
-        if(_formKey.currentState != null && _formKey.currentState.validate()){
-          workItem.details = _detailsController.text;
-          workItem.summary = _summaryController.text;
-          workItem.startTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startTimeController.text));
-          workItem.endTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_endTimeController.text));
-          if(DataSamples.addWorkItem(workItem)){
-            Navigator.pop(context);
-          }
-          else{
-            print("error saving work Item: $workItem");
-            //something is wrong
-          }
-        }
-        else{
-          print("error saving work Item: $workItem");
-          //something else is wrong
-        }
+        save(context);
       },
     );
 
@@ -79,14 +63,7 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
         ThemeIconButtons.buildIconButton(
           iconData: Icons.add_box,
           onPressedFunc: () {
-            if(_formKey.currentState != null && _formKey.currentState.validate()){
-              if(DataSamples.addWorkItem(workItem)) {
-                Navigator.pop(context);
-              }
-              else{
-                //something is wrong
-              }
-            }
+            save(context);
           }
         ),
       ],
@@ -134,6 +111,26 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
       ),
     );
   }
+
+  void save(BuildContext context){
+    if(_formKey.currentState != null && _formKey.currentState.validate()){
+      workItem.details = _detailsController.text;
+      workItem.summary = _summaryController.text;
+      workItem.startTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startTimeController.text));
+      workItem.endTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_endTimeController.text));
+      if(DataSamples.addWorkItem(workItem)){
+        Navigator.pop(context);
+      }
+      else{
+        print("error saving work Item: $workItem");
+        //something is wrong
+      }
+    }
+    else{
+      print("error saving work Item: $workItem");
+      //something else is wrong
+    }
+  }
 }
 
 class WorkItemDetailPage extends StatefulWidget {
@@ -149,42 +146,28 @@ class WorkItemDetailPage extends StatefulWidget {
 class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
   final _formKey = GlobalKey<FormState>();
   Project project;
+  TextEditingController _endTimeController;
+  TextEditingController _startTimeController;
+  TextEditingController _summaryController;
+  TextEditingController _detailsController;
 
   @override
   void initState() {
     project = DataSamples.getProjectById(widget.workItem.projectId);
+    _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.endTime));
+    _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.startTime));
+    _summaryController = TextEditingController(text: widget.workItem.summary);
+    _detailsController = TextEditingController(text: widget.workItem.details);
     super.initState();
   }
 
-  Widget _buildAppBody(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Expanded(
-          flex: 1,
-          child: Container(
-            color: ThemeColors.card,
-            child: Center(
-              child: Text(longDurationFormat(widget.workItem.endTime.difference(widget.workItem.startTime)), //need to find way to stop text from moving around with different text inputs of various width
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 75,
-                  fontFamily: ThemeTextStyles.mainFont
-                ),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 4,
-          child: WorkItemForm(
-            workItem: widget.workItem,
-            formKey: _formKey,
-            enabled: false,
-          ),
-        )
-      ],
-    );
+  @override
+  void dispose() {
+    _endTimeController.dispose();
+    _startTimeController.dispose();
+    _summaryController.dispose();
+    _detailsController.dispose();
+    super.dispose();
   }
 
   @override
@@ -196,7 +179,9 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
         ThemeIconButtons.buildIconButton(
           iconData: Icons.edit,
           onPressedFunc: () {
-            Routing.navigateTo(context, "${Routing.workItemEditRoute}/${widget.workItem.workItemId}");
+            Routing.navigateTo(context, "${Routing.workItemEditRoute}/${widget.workItem.workItemId}")..then((val){
+              Navigator.pop(context);
+            });
           }
         ),
         ThemeIconButtons.buildIconButton(
@@ -208,6 +193,45 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
         ),
       ],
       body: _buildAppBody(context),
+    );
+  }
+
+  Widget _buildAppBody(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        WorkItemClock(
+          workItem: widget.workItem,
+          endTimeController: _endTimeController,
+          isCounting: false,
+        ),
+        Container(
+          height: 3,
+          color: ThemeColors.highlightedData,
+        ),
+        Expanded(
+          flex: 5,
+          child: Column(
+            children: <Widget>[
+              buildForm(),
+            ],
+          )
+        ),
+      ]
+    );
+  }
+
+  Widget buildForm(){
+    return Expanded(
+      flex: 5,
+      child: WorkItemForm(
+        formKey: _formKey,
+        workItem: widget.workItem,
+        enabled: false,
+        endTimeController: _endTimeController,
+        startTimeController: _startTimeController,
+        summaryController: _summaryController,
+        detailsController: _detailsController ,
+      ),
     );
   }
 }
@@ -224,30 +248,54 @@ class WorkItemEditPage extends StatefulWidget {
 class _WorkItemEditPageState extends State<WorkItemEditPage> {
   final _formKey = GlobalKey<FormState>();
   Project project;
-  Duration duration;
+  TextEditingController _endTimeController;
+  TextEditingController _startTimeController;
+  TextEditingController _summaryController;
+  TextEditingController _detailsController;
 
   @override
   void initState() {
     project = DataSamples.getProjectById(widget.workItem.projectId);
-    duration = widget.workItem.endTime.difference(widget.workItem.startTime);
+    _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.endTime));
+    _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.startTime));
+    _summaryController = TextEditingController(text: widget.workItem.summary);
+    _detailsController = TextEditingController(text: widget.workItem.details);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _endTimeController.dispose();
+    _startTimeController.dispose();
+    _summaryController.dispose();
+    _detailsController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     AppScaffoldBottomSheet appScaffoldBottomSheet = AppScaffoldBottomSheet(
       iconData: Icons.add,
-      iconText: 'add',
+      iconText: 'save',
+      onTapFunc: () {
+        update(context);
+      },
     );
 
     return AppScaffold(
-      appBarTitle: ThemeText.appBarText('add work item'),
+      appBarTitle: ThemeText.appBarText('edit work item'),
       appBarActions: <Widget>[
         ThemeIconButtons.buildIconButton(
           iconData: Icons.delete_forever,
           onPressedFunc: () {
             Navigator.pop(context);
             //delete it I guess?
+          }
+        ),
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.save,
+          onPressedFunc: () {
+            update(context);
           }
         ),
       ],
@@ -262,31 +310,73 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
   Widget _buildContents(BuildContext context){
     return Column(
       children: <Widget>[
-        Expanded(
-          flex: 1,
-          child: Container(
-            color: ThemeColors.card,
-            child: Center(
-              child: Text(longDurationFormat(duration), //need to find way to stop text from moving around with different text inputs of various width
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 75,
-                  fontFamily: ThemeTextStyles.mainFont
-                ),
-              ),
-            ),
-          ),
+        WorkItemClock(
+          workItem: widget.workItem,
+          endTimeController: _endTimeController,
+          isCounting: false,
+        ),
+        Container(
+          height: 3,
+          color: ThemeColors.highlightedData,
         ),
         Expanded(
-          flex: 4,
-          child: WorkItemForm(
-            workItem: widget.workItem,
-            formKey: _formKey,
-          ),
-        )
+          flex: 5,
+          child: Column(
+            children: <Widget>[
+              buildForm(),
+            ],
+          )
+        ),
       ]
     );
+  }
+
+  Widget buildForm(){
+    return Expanded(
+      flex: 5,
+      child: WorkItemForm(
+        workItem: widget.workItem,
+        formKey: _formKey,
+        enabled: true,
+        endTimeController: _endTimeController,
+        startTimeController: _startTimeController,
+        summaryController: _summaryController,
+        detailsController: _detailsController ,
+      ),
+    );
+  }
+
+  void update(BuildContext context){
+    if(_formKey.currentState != null && _formKey.currentState.validate()){
+      widget.workItem.details = _detailsController.text;
+      widget.workItem.summary = _summaryController.text;
+      widget.workItem.startTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startTimeController.text));
+      widget.workItem.endTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_endTimeController.text));
+      if(DataSamples.updateWorkItem(widget.workItem)){
+        //TODO: need to pop state but go back to the details screen after it saves rather than the project details
+        Navigator.pop(context);
+/*        setState(() {
+          FocusScopeNode currentFocus = FocusScope.of(context);
+          if(!currentFocus.hasPrimaryFocus){
+            currentFocus.unfocus();
+          }
+
+          _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.endTime));
+          _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.startTime));
+          _summaryController = TextEditingController(text: widget.workItem.summary);
+          _detailsController = TextEditingController(text: widget.workItem.details);
+
+        });*/
+      }
+      else{
+        print("error saving work Item: ${widget.workItem}");
+        //something is wrong
+      }
+    }
+    else{
+      print("error saving work Item: ${widget.workItem}");
+      //something else is wrong
+    }
   }
 }
 
@@ -376,7 +466,7 @@ class WorkItemCard extends StatelessWidget{
                         Expanded(
                           flex: 1,
                           child: Container(
-                            child: ThemeText.commonHeaderText(workItem.summary),
+                            child: ThemeText.commonHeaderText(text: workItem.summary),
                             padding: const EdgeInsets.symmetric(horizontal: 5),
                             //color: Colors.red[600],
                           ),
@@ -427,6 +517,9 @@ class _WorkItemFormState extends State<WorkItemForm> {
   final String detailsField = 'Details';
   final String startedField = "Started";
   final String completedField = "Completed";
+  //TODO: look into focus manager for managing focus of non text input fields
+  final FocusNode summaryNode = new FocusNode();
+  final FocusNode detailsNode = new FocusNode();
 
   @override
   void initState() {
@@ -435,6 +528,8 @@ class _WorkItemFormState extends State<WorkItemForm> {
 
   @override
   void dispose() {
+    summaryNode.dispose();
+    detailsNode.dispose();
     super.dispose();
   }
 
@@ -451,12 +546,15 @@ class _WorkItemFormState extends State<WorkItemForm> {
       formKey: widget.formKey,
       listViewChildren: <Widget>[
         ThemeInput.textFormField(
+          currentFocusNode: summaryNode,
+          nextFocusNode: detailsNode,
           controller: widget.summaryController,
           enabled: widget.enabled,
           label: summaryField,
+          textInputAction: TextInputAction.next,
           //TODO: don't include initial value if controller value is null
           //initialValue: widget.summaryController.text,
-          //TODO: just limit the amount of characters you an enter instead of doing this validation
+          //TODO: just limit the amount of characters you an enter instead of doing this length validation
           validatorFunc: (val) {
             return baseValidatorLengthValidation(
               val: val,
@@ -464,20 +562,24 @@ class _WorkItemFormState extends State<WorkItemForm> {
               maxLength: 75,
             );
           },
+          context: context,
         ),
         ThemeInput.textFormField(
+          currentFocusNode: detailsNode,
           controller: widget.detailsController,
           enabled: widget.enabled,
           label: detailsField,
           //initialValue: widget.detailsController.text,
           maxLines: 2,
+          textInputAction: TextInputAction.done,
           validatorFunc: (val) {
             return baseValidatorLengthValidation(
               val: val,
               fieldName: detailsField,
               maxLength: 250,
             );
-          }
+          },
+          context: context,
         ),
         ThemeInput.dateTimeField(
           textEditingController: widget.startTimeController,
@@ -499,7 +601,7 @@ class _WorkItemFormState extends State<WorkItemForm> {
           context: context,
           format: DateFormat(detailedDateFormatWithSecondsString),
           label: completedField,
-          originalValue: widget.workItem.endTime,
+          originalValue: DateTime.parse(reformatDetailedDateFormatWithSecondsString(widget.endTimeController.text)),
           validatorFunc: (val) {
             return baseValidatorDateTimeRequiredValidation(
               val: val,
@@ -513,10 +615,11 @@ class _WorkItemFormState extends State<WorkItemForm> {
 }
 
 class WorkItemClock extends StatefulWidget {
-  WorkItemClock({this.workItem, this.endTimeController});
+  WorkItemClock({this.workItem, this.endTimeController, this.isCounting = true});
 
   final WorkItem workItem;
   final TextEditingController endTimeController;
+  final bool isCounting;
 
   @override
   _WorkItemClockState createState() => _WorkItemClockState();
@@ -529,7 +632,11 @@ class _WorkItemClockState extends State<WorkItemClock> {
 
   @override
   void initState() {
-    startTimer();
+    _duration = widget.workItem.duration ?? Duration();
+    if(widget.isCounting){
+      startTimer();
+    }
+
     super.initState();
   }
 
@@ -553,7 +660,9 @@ class _WorkItemClockState extends State<WorkItemClock> {
 
   @override
   void dispose() {
-    _timer.cancel();
+    if(_timer != null){
+      _timer.cancel();
+    }
     super.dispose();
   }
 

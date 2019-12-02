@@ -12,6 +12,7 @@ import 'package:flushbar/flushbar.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:time_manager/view/work_item_page.dart';
 import 'package:time_manager/common/more_options_popup_menu.dart';
+import 'package:time_manager/model/common/abstracts.dart';
 
 class ProjectAddPage extends StatefulWidget {
   final Project project;
@@ -23,8 +24,45 @@ class ProjectAddPage extends StatefulWidget {
 }
 
 class _ProjectAddPageState extends State<ProjectAddPage> {
+  TextEditingController _priorityController;
+  TextEditingController _applicationController;
+  TextEditingController _statusController;
+  TextEditingController _nameController;
+  TextEditingController _detailsController;
+  TextEditingController _startedTimeController;
+  TextEditingController _completedTimeController;
+
   @override
   void initState() {
+    _priorityController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.priority?.toString(), defaultValue: "0")
+    );
+    _applicationController = TextEditingController(
+      text: ensureValue(
+        value: ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key)
+    );
+    _statusController = TextEditingController(
+      text: ensureValue(
+        value: StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key)
+    );
+    _nameController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.name)
+    );
+    _detailsController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.description)
+    );
+    _startedTimeController = TextEditingController(
+      text: ensureValue(
+        value: detailedDateFormatWithSeconds(widget.project.startedTime))
+    );
+    _completedTimeController = TextEditingController(
+      text: ensureValue(
+        value: detailedDateFormatWithSeconds(widget.project.completedTime))
+    );
+
     super.initState();
   }
 
@@ -32,6 +70,14 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
 
   @override
   Widget build(BuildContext context) {
+    AppScaffoldBottomSheet appScaffoldBottomSheet = AppScaffoldBottomSheet(
+      iconData: Icons.add,
+      iconText: 'add',
+      onTapFunc: () {
+        save(context);
+      }
+    );
+
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Add Project'),
       appBarActions: <Widget>[
@@ -52,19 +98,40 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
           formKey: _formKey,
           project: widget.project,
           enabled: true,
+          priorityController: _priorityController,
+          applicationController: _applicationController,
+          statusController: _statusController,
+          nameController: _nameController,
+          detailsController: _detailsController,
+          startedTimeController: _startedTimeController,
+          completedTimeController: _completedTimeController,
         ),
       ),
       persistentBottomSheet: appScaffoldBottomSheet
     );
   }
 
-  final AppScaffoldBottomSheet appScaffoldBottomSheet = AppScaffoldBottomSheet(
-    iconData: Icons.add,
-    iconText: 'add',
-    onTapFunc: () {
+  void save(BuildContext context){
+    if(_formKey.currentState != null && _formKey.currentState.validate()){
+      widget.project.priority = int.parse(_priorityController.text);
+      widget.project.applicationId = ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.key == _applicationController.text).value;
+      widget.project.statusTypeId = StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.key == _statusController.text).value;
+      widget.project.name = _nameController.text;
+      widget.project.description = _detailsController.text;
+      widget.project.startedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startedTimeController.text));
+      widget.project.completedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_completedTimeController.text));
 
+      if(DataSamples.addProject(widget.project)){
+        Navigator.pop(context);
+      }
+      else{
+        print("Error saving project: ${widget.project.toString()}");
+      }
     }
-  );
+    else{
+      print("Error validating project: ${widget.project.toString()}");
+    }
+  }
 }
 
 class ProjectDetailPage extends StatefulWidget {
@@ -79,6 +146,13 @@ class ProjectDetailPage extends StatefulWidget {
 
 class _ProjectDetailPageState extends State<ProjectDetailPage> {
   final _formKey = GlobalKey<FormState>();
+  TextEditingController _priorityController;
+  TextEditingController _applicationController;
+  TextEditingController _statusController;
+  TextEditingController _nameController;
+  TextEditingController _detailsController;
+  TextEditingController _startedTimeController;
+  TextEditingController _completedTimeController;
 
   Widget getFlushBar(BuildContext context){
     return Flushbar<List<String>>(
@@ -122,7 +196,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             ],
           ),
           Center(
-            child: ThemeText.headerText("Work Items ($numWorkItems)"),
+            child: ThemeText.headerText(text: "Work Items ($numWorkItems)"),
           ),
         ],
       )
@@ -153,6 +227,39 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    _priorityController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.priority?.toString(), defaultValue: "0")
+    );
+    _applicationController = TextEditingController(
+      text: ensureValue(
+        value: ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key)
+    );
+    _statusController = TextEditingController(
+      text: ensureValue(
+        value: StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key)
+    );
+    _nameController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.name)
+    );
+    _detailsController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.description)
+    );
+    _startedTimeController = TextEditingController(
+      text: ensureValue(
+        value: detailedDateFormatWithSeconds(widget.project.startedTime))
+    );
+    _completedTimeController = TextEditingController(
+      text: ensureValue(
+        value: detailedDateFormatWithSeconds(widget.project.completedTime))
+    );
+    super.initState();
   }
 
   @override
@@ -188,6 +295,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         body: ProjectForm(
           formKey: _formKey,
           project: widget.project,
+          priorityController: _priorityController,
+          applicationController: _applicationController,
+          statusController: _statusController,
+          nameController: _nameController,
+          detailsController: _detailsController,
+          startedTimeController: _startedTimeController,
+          completedTimeController: _completedTimeController,
         ),
       ),
       floatingActionButton: AppScaffoldFAB(
@@ -216,45 +330,132 @@ class ProjectEditPage extends StatefulWidget {
 }
 
 class _ProjectEditPageState extends State<ProjectEditPage> {
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController _priorityController;
+  TextEditingController _applicationController;
+  TextEditingController _statusController;
+  TextEditingController _nameController;
+  TextEditingController _detailsController;
+  TextEditingController _startedTimeController;
+  TextEditingController _completedTimeController;
+
   @override
   void initState() {
+
+    _priorityController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.priority?.toString(), defaultValue: "0")
+    );
+    _applicationController = TextEditingController(
+      text: ensureValue(
+        value: ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key)
+    );
+    _statusController = TextEditingController(
+      text: ensureValue(
+        value: StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key)
+    );
+    _nameController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.name)
+    );
+    _detailsController = TextEditingController(
+      text: ensureValue(
+        value: widget.project.description)
+    );
+    _startedTimeController = TextEditingController(
+      text: ensureValue(
+        value: detailedDateFormatWithSeconds(widget.project.startedTime))
+    );
+    _completedTimeController = TextEditingController(
+      text: ensureValue(
+        value: detailedDateFormatWithSeconds(widget.project.completedTime))
+    );
     super.initState();
   }
 
-  final _formKey = GlobalKey<FormState>();
-
   @override
   Widget build(BuildContext context) {
+    AppScaffoldBottomSheet appScaffoldBottomSheet = AppScaffoldBottomSheet(
+      iconData: Icons.add,
+      iconText: 'update',
+      onTapFunc: () {
+        update(context);
+      }
+    );
+
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Edit Project'),
       appBarActions: <Widget>[
-        IconButton(
-          padding: const EdgeInsets.all(5),
-          icon: Icon(Icons.delete_forever),
-          iconSize: 30,
-          color: Colors.white,
-          splashColor: ThemeColors.highlightedData,
-          onPressed: () {
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.delete_forever,
+          onPressedFunc: (){
+            DataSamples.projects.removeWhere((proj) => proj.projectId == widget.project.projectId);
             Navigator.pop(context);
-          },
+          }
+        ),
+        //TODO: make save button change color to green when a field is changed
+        ThemeIconButtons.buildIconButton(
+          iconData: Icons.save,
+          onPressedFunc: (){
+            update(context);
+          }
         )
       ],
       body: ProjectForm(
         formKey: _formKey,
         project: widget.project,
         enabled: true,
+        priorityController: _priorityController,
+        applicationController: _applicationController,
+        statusController: _statusController,
+        nameController: _nameController,
+        detailsController: _detailsController,
+        startedTimeController: _startedTimeController,
+        completedTimeController: _completedTimeController,
       ),
+      persistentBottomSheet: appScaffoldBottomSheet,
     );
+  }
+
+  void update(BuildContext context){
+    if(_formKey.currentState != null && _formKey.currentState.validate()){
+      widget.project.priority = int.parse(_priorityController.text);
+      widget.project.applicationId = ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.key == _applicationController.text).value;
+      widget.project.statusTypeId = StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.key == _statusController.text).value;
+      widget.project.name = _nameController.text;
+      widget.project.description = _detailsController.text;
+      widget.project.startedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startedTimeController.text));
+      widget.project.completedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_completedTimeController.text));
+
+      if(DataSamples.updateProject(widget.project)){
+        Navigator.pop(context);
+      }
+      else{
+        print("Error saving project: ${widget.project.toString()}");
+      }
+    }
+    else{
+      print("Error validating project: ${widget.project.toString()}");
+    }
   }
 }
 
 class ProjectForm extends StatefulWidget{
-  ProjectForm({@required this.formKey, @required this.project, this.enabled = false});
+  ProjectForm({@required this.formKey, @required this.project, this.enabled = false,
+    this.priorityController, this.applicationController, this.statusController, this.nameController,
+    this.detailsController, this.startedTimeController, this.completedTimeController});
 
   final Project project;
   final GlobalKey<FormState> formKey;
   ///false by default to ensure readonly fields
   final bool enabled;
+  final TextEditingController priorityController;
+  final TextEditingController applicationController;
+  final TextEditingController statusController;
+  final TextEditingController nameController;
+  final TextEditingController detailsController;
+  final TextEditingController startedTimeController;
+  final TextEditingController completedTimeController;
 
   @override
   _ProjectFormState createState() => _ProjectFormState();
@@ -302,27 +503,42 @@ class _ProjectFormState extends State<ProjectForm> with SingleTickerProviderStat
       listViewChildren: <Widget>[
         ThemeInput.intFormField(
           enabled: widget.enabled,
+          controller: widget.priorityController,
           label: 'priority',
-          initialValue: widget.project.priority?.toString(),
-          textInputAction: TextInputAction.next,
+          textInputAction: TextInputAction.done,
           context: context,
           currentFocusNode: priorityNode,
-          nextFocusNode: applicationNode,
         ),
-        ThemeForm.buildFormFieldDropdown(
-          enabled: enabled,
-          labelText: 'application',
-          value: widget.project.applicationId == null
-            ? ApplicationNames.options.entries.first
-            : ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key,
-          options: ApplicationNames.options.keys.toList(),
-          onChangedFunc: (String value) {
-            setState(() {
-              widget.project.applicationId = ApplicationNames.options[value];
-            });
-          }
+        ThemeInput.optionsSelector<ApplicationNames>(
+          controller: widget.applicationController,
+          initialValue: DataSamples.getApplicationById(widget.project.applicationId),
+          options: List<Options>.from(DataSamples.applications),
+          context: context,
+          label: "Application",
+          title: "Applications",
         ),
-        ThemeForm.buildFormFieldDropdown(
+//        ThemeForm.buildFormFieldDropdown(
+//          enabled: enabled,
+//          labelText: 'application',
+//          value: widget.project.applicationId == null
+//            ? ApplicationNames.options.entries.first
+//            : ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key,
+//          options: ApplicationNames.options.keys.toList(),
+//          onChangedFunc: (String value) {
+//            setState(() {
+//              widget.project.applicationId = ApplicationNames.options[value];
+//            });
+//          }
+//        ),
+        ThemeInput.optionsSelector<StatusTypes>(
+          controller: widget.statusController,
+          initialValue: DataSamples.getStatusTypeById(widget.project.statusTypeId),
+          options: List<Options>.from(DataSamples.statusTypes),
+          context: context,
+          label: "Status Type",
+          title: "Status Types"
+        ),
+        /*ThemeForm.buildFormFieldDropdown(
           enabled: enabled,
           labelText: 'status',
           value: widget.project.statusTypeId == null
@@ -334,11 +550,11 @@ class _ProjectFormState extends State<ProjectForm> with SingleTickerProviderStat
               widget.project.statusTypeId = StatusTypes.options[value];
             });
           }
-        ),
+        ),*/
         ThemeInput.textFormField(
           enabled: enabled,
           label: 'Name',
-          initialValue: widget.project.name,
+          controller: widget.nameController,
           textInputAction: TextInputAction.next,
           currentFocusNode: nameNode,
           nextFocusNode: detailsNode,
@@ -347,7 +563,7 @@ class _ProjectFormState extends State<ProjectForm> with SingleTickerProviderStat
         ThemeInput.textFormField(
           enabled: enabled,
           label: 'Details',
-          initialValue: widget.project.details,
+          controller: widget.detailsController,
           textInputAction: TextInputAction.next,
           currentFocusNode: detailsNode,
           nextFocusNode: startedTimeNode,
@@ -361,7 +577,7 @@ class _ProjectFormState extends State<ProjectForm> with SingleTickerProviderStat
           currentFocusNode: startedTimeNode,
           nextFocusNode: completedTimeNode,
           label: 'started',
-          originalValue: widget.project.startedTime,
+          textEditingController: widget.startedTimeController,
           format: DateFormat(detailedDateFormatWithSecondsString),
         ),
         ThemeInput.dateTimeField(
@@ -370,19 +586,23 @@ class _ProjectFormState extends State<ProjectForm> with SingleTickerProviderStat
           context: context,
           currentFocusNode: completedTimeNode,
           label: 'completed',
-          originalValue: widget.project.completedTime ?? DateTime(2999),
+          textEditingController: widget.completedTimeController,
           format: DateFormat(detailedDateFormatWithSecondsString),
         ),
         ThemeForm.buildFormRowFromFields(
           children: <Widget>[
             ThemeInput.intFormField(
-              initialValue: widget.project.workItemCount?.toString() ?? "0",
+              controller: TextEditingController(
+                text: ensureValue(
+                  value: widget.project.workItemCount?.toString(),
+                  defaultValue: "0")
+              ),
               enabled: false,
               label: 'work items',
             ),
             ThemeInput.textFormField(
               label: 'total hours',
-              initialValue: shortDurationFormat(widget.project.totalHours),
+              controller: TextEditingController(text: shortDurationFormat(widget.project.totalHours)),
               enabled: false,
             ),
           ]
@@ -402,7 +622,7 @@ class ProjectCard extends StatelessWidget{
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
-          child: ThemeText.headerText(text)
+          child: ThemeText.headerText(text: text)
         ),
         Container(
           margin: const EdgeInsets.only(left: 10, right: 10, top: 2, bottom: 2),

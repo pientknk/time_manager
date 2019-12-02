@@ -18,7 +18,15 @@ class WorkItem implements Data{
   int projectId;
   String summary;
   String details;
-  Duration duration;
+
+  Duration get duration{
+    if(startTime != null && endTime != null){
+      return endTime.difference(startTime);
+    }
+    else{
+      return Duration();
+    }
+  }
 
   WorkItem({
     this.workItemId,
@@ -42,11 +50,10 @@ class WorkItem implements Data{
     @required this.details, @required this.endTime}) {
     this.createdTime = DateTime.now();
     this.updatedTime = this.createdTime;
-    this.duration = this.endTime.difference(this.startTime);
   }
 
   WorkItem._({@required this.workItemId, @required this.startTime, @required this.projectId, @required this.summary,
-    @required this.details, this.createdTime, this.updatedTime, this.endTime, this.duration});
+    @required this.details, this.createdTime, this.updatedTime, this.endTime});
 
   /*factory WorkItem(int workItemID, int projectID, String summary, String details){
     DateTime createdTime = DateTime.now();
@@ -62,8 +69,7 @@ class WorkItem implements Data{
     this.endTime = workItem.endTime,
     this.projectId = workItem.projectId,
     this.summary = workItem.summary,
-    this.details = workItem.details,
-    this.duration = workItem.duration;
+    this.details = workItem.details;
 
   static WorkItem fromJson(Map<String, dynamic> json) => WorkItem(
     workItemId: json["workItemId"],
@@ -140,11 +146,13 @@ class WorkItem implements Data{
 Category categoryFromJson(String str) => Category.fromJson(json.decode(str));
 String categoryToJson(Category data) => json.encode(data.toJson());
 
-class Category implements Data {
+class Category implements Data, Options {
   int categoryId;
   DateTime createdTime;
   DateTime updatedTime;
+  @override
   String name;
+  @override
   String description;
 
   Category({
@@ -224,13 +232,15 @@ class Category implements Data {
 Project projectFromJson(String str) => Project.fromJson(json.decode(str));
 String projectToJson(Project data) => json.encode(data.toJson());
 
-class Project implements Data {
+class Project implements Data, Options {
   int projectId;
   DateTime createdTime;
   DateTime updatedTime;
   int applicationId;
+  @override
   String name;
-  String details;
+  @override
+  String description;
   int priority;
   int statusTypeId;
   DateTime startedTime;
@@ -238,12 +248,13 @@ class Project implements Data {
   Duration totalHours;
   int workItemCount;
   int categoryId;
+  int projectTypeId;
 
   Project({
     this.projectId,
     this.applicationId,
     this.name,
-    this.details,
+    this.description,
     this.priority,
     this.statusTypeId,
     this.startedTime,
@@ -251,6 +262,7 @@ class Project implements Data {
     this.totalHours,
     this.workItemCount,
     this.categoryId,
+    this.projectTypeId,
   });
 
   Project.newProject({@required this.applicationId}){
@@ -262,7 +274,7 @@ class Project implements Data {
     this.priority = 999;
   }
 
-  Project._({@required this.projectId, @required this.applicationId, @required this.name, @required this.details, @required this.statusTypeId,
+  Project._({@required this.projectId, @required this.applicationId, @required this.name, @required this.description, @required this.statusTypeId,
     this.createdTime, this.updatedTime, this.totalHours, this.workItemCount, this.startedTime, this.completedTime, this.priority, this.categoryId});
 
   /*factory Project(int projectId, int applicationId, String name, String details, {Duration totalHours = const Duration(hours: 11, minutes: 38),
@@ -280,7 +292,7 @@ class Project implements Data {
     projectId: json["projectId"],
     applicationId: json["applicationId"],
     name: json["name"],
-    details: json["details"],
+    description: json["details"],
     priority: json["priority"],
     statusTypeId: json["statusTypeId"],
     startedTime: json["startedTime"],
@@ -288,13 +300,14 @@ class Project implements Data {
     totalHours: json["totalHours"],
     workItemCount: json["workItemCount"],
     categoryId: json["categoryId"],
+    projectTypeId: json["projectTypeId"],
   );
 
   Map<String, dynamic> toJson() => {
     "projectId": projectId,
     "applicationId": applicationId,
     "name": name,
-    "details": details,
+    "details": description,
     "priority": priority,
     "statusTypeId": statusTypeId,
     "startedTime": startedTime,
@@ -302,6 +315,7 @@ class Project implements Data {
     "totalHours": totalHours,
     "workItemCount": workItemCount,
     "categoryId": categoryId,
+    "projectTypeId": projectTypeId,
   };
 
   @override
@@ -365,28 +379,40 @@ class StatusTypes {
   static Map<String, int> options = Map.fromIterable(DataSamples.statusTypes,
     key: (st) => st.name,
     value: (st) => st.statusTypeId);
+
+  static List<Options> optionsForPage = DataSamples.statusTypes;
 }
 
-class ApplicationNames {
+class ApplicationNames{
   static Map<String, int> options = Map.fromIterable(DataSamples.applications,
     key: (app) => app.name,
     value: (app) => app.applicationId);
 }
 
+class ProjectTypes {
+  static Map<String, int> options = Map.fromIterable(DataSamples.projectTypes,
+    key: (pt) => pt.name,
+    value: (pt) => pt.projectTypeId);
+}
+
 StatusType statusTypeFromJson(String str) => StatusType.fromJson(json.decode(str));
 String statusTypeToJson(StatusType data) => json.encode(data.toJson());
 
-class StatusType implements Data {
+class StatusType implements Data, Options {
   int statusTypeId;
   DateTime createdTime;
   DateTime updatedTime;
+  @override
   String name;
+  @override
+  String description;
 
   StatusType({
     this.statusTypeId,
     this.createdTime,
     this.updatedTime,
     this.name,
+    this.description
   });
 
   static StatusType fromJson(Map<String, dynamic> json) => StatusType(
@@ -394,6 +420,7 @@ class StatusType implements Data {
     createdTime: json["createdTime"],
     updatedTime: json["updatedTime"],
     name: json["name"],
+    description: json["description"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -401,6 +428,7 @@ class StatusType implements Data {
     "createdTime": createdTime,
     "updatedTime": updatedTime,
     "name": name,
+    "description": description,
   };
 
   @override
@@ -461,14 +489,17 @@ class StatusType implements Data {
 Filter filterFromJson(String str) => Filter.fromJson(json.decode(str));
 String filterToJson(Filter data) => json.encode(data.toJson());
 
-class Filter implements Data {
+class Filter implements Data, Options {
   int filterId;
   DateTime createdTime;
   DateTime updatedTime;
   String filterXml; //might not need this if the various aspects of a filter can easily be defined in fields and won't change
   bool isDefault;
   bool isDescending;
+  @override
   String name;
+  @override
+  String description;
   int statusTypeId;
 
   Filter({
@@ -479,10 +510,11 @@ class Filter implements Data {
     this.isDefault,
     this.isDescending,
     this.name,
+    this.description,
     this.statusTypeId,
   });
 
-  Filter._({@required this.filterId, @required this.isDefault, @required this.isDescending, @required this.name,
+  Filter._({@required this.filterId, @required this.isDefault, @required this.isDescending, @required this.name, this.description,
     this.createdTime, this.updatedTime, this.filterXml, this.statusTypeId});
 
   /*factory Filter(int filterID, String name, bool isDefault, bool isDescending, {status = StatusTypes.available}){
@@ -499,6 +531,7 @@ class Filter implements Data {
     isDefault: json["isDefault"],
     isDescending: json["isDescending"],
     name: json["name"],
+    description: json['description'],
     statusTypeId: json["status"],
   );
 
@@ -511,6 +544,7 @@ class Filter implements Data {
     "isDescending": isDescending,
     "name": name,
     "statusTypeId": statusTypeId,
+    "description": description,
   };
 
   Filter.fromFilter(Filter filter) :
@@ -521,6 +555,7 @@ class Filter implements Data {
     this.isDefault = filter.isDefault,
     this.isDescending = filter.isDescending,
     this.name = filter.name,
+    this.description = filter.description,
     this.statusTypeId = filter.statusTypeId;
 
   @override
@@ -576,12 +611,14 @@ class Filter implements Data {
 Application applicationFromJson(String str) => Application.fromJson(json.decode(str));
 String applicationToJson(Application data) => json.encode(data.toJson());
 
-class Application implements Data{
+class Application implements Data, Options{
   int applicationId;
   int systemId;
   DateTime createdTime;
   DateTime updatedTime;
+  @override
   String name;
+  @override
   String description;
   String version;
   DateTime workStartedDate;
@@ -684,12 +721,14 @@ class Application implements Data{
 System systemFromJson(String str) => System.fromJson(json.decode(str));
 String systemToJson(System data) => json.encode(data.toJson());
 
-class System implements Data {
+class System implements Data, Options {
   int systemId;
   DateTime createdTime;
   DateTime updatedTime;
-  int name;
-  int description;
+  @override
+  String name;
+  @override
+  String description;
 
   System({
     this.systemId,
@@ -846,4 +885,75 @@ class Settings implements Data {
   }
 }
 
+class ProjectType implements Data, Options{
+  int projectTypeId;
+  DateTime createdTime;
+  DateTime updatedTime;
+  @override
+  String name;
+  @override
+  String description;
+  List<int> projectIds; //get projects that currently have this project type
 
+  ProjectType({
+    this.projectTypeId,
+    this.createdTime,
+    this.updatedTime,
+    this.name,
+    this.description,
+  });
+
+  @override
+  bool save() {
+    // TODO: implement save
+    return null;
+  }
+
+  @override
+  T read<T>() {
+    // TODO: implement read
+    return null;
+  }
+
+  @override
+  bool update() {
+    // TODO: implement update
+    return null;
+  }
+
+  @override
+  bool delete() {
+    // TODO: implement delete
+    return null;
+  }
+
+  @override
+  Future<int> sqlLiteInsert() {
+    // TODO: implement sqlLiteInsert
+    return null;
+  }
+
+  @override
+  Future<T> sqlLiteSelect<T>() {
+    // TODO: implement sqlLiteSelect
+    return null;
+  }
+
+  @override
+  Future<List<T>> sqlLiteSelectAll<T>() {
+    // TODO: implement sqlLiteSelectAll
+    return null;
+  }
+
+  @override
+  Future<int> sqlLiteUpdate() {
+    // TODO: implement sqlLiteUpdate
+    return null;
+  }
+
+  @override
+  Future<int> sqlLiteDelete() {
+    // TODO: implement sqlLiteDelete
+    return null;
+  }
+}
