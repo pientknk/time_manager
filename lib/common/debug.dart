@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart' as Foundation;
 
+enum DebugMode { Debug, Release }
+
 class Debug{
   const Debug();
 

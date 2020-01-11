@@ -143,3 +143,23 @@ String ensureValue({@required String value, String defaultValue}){
     return "";
   }
 }
+
+/// Adds a value to an existing enum from an enum.toString representation
+/// ex. Options.delete -> parses out delete and add that to the Options enum
+void addToEnum<T>(List<T> enumValues, String valueToAdd){
+  if(valueToAdd != null){
+    List<String> values = valueToAdd.split('.');
+    if(values.length == 2){
+      //enumValues.add(values[1]);
+    }
+  }
+}
+
+bool intResultToBool(int result, {int expectedResult = 1}){
+  if(result == expectedResult){
+    return true;
+  }
+  else{
+    return false;
+  }
+}

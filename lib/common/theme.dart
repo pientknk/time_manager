@@ -8,6 +8,31 @@ import 'package:flutter/services.dart';
 import 'package:time_manager/view/options_page.dart';
 import 'package:time_manager/model/common/abstracts.dart';
 
+enum ThemeType { dark, light }
+
+ThemeData getThemeByType(ThemeType type){
+  switch(type){
+    case ThemeType.dark:
+      return ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Colors.black,
+        accentColor: Colors.grey[200],
+        cardColor: Colors.orange,
+      );
+    case ThemeType.light:
+      return ThemeData(
+        brightness: Brightness.light,
+        primaryColor: Colors.white,
+        accentColor: Colors.black,
+      );
+    default:
+      return ThemeData(
+        brightness: Brightness.light,
+        fontFamily: 'Helvetica'
+      );
+  }
+}
+
 class ThemeColors{
   const ThemeColors();
 
@@ -173,14 +198,30 @@ class ThemeInput {
   }
 
   static OutlineInputBorder outlineInputBorder = OutlineInputBorder(
-    borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
+    //borderSide: BorderSide(color: ThemeColors.unselectedButtonColor)
+    borderSide: BorderSide(color: Colors.green),
+    borderRadius: BorderRadius.circular(4),
+  );
+
+  static UnderlineInputBorder underlineInputBorder = UnderlineInputBorder(
+    borderRadius: BorderRadius.circular(4),
+    borderSide: BorderSide(color: Colors.green)
   );
 
   static InputDecoration inputDecoration(String label) {
     return InputDecoration(
       labelText: label.toUpperCase(),
       enabledBorder: outlineInputBorder,
-      border: outlineInputBorder
+      border: outlineInputBorder,
+    );
+  }
+
+  static InputDecoration inputDecorationWithSuffixIcon(String label){
+    return InputDecoration(
+      labelText: label.toUpperCase(),
+      enabledBorder: outlineInputBorder,
+      border: outlineInputBorder,
+      suffixIcon: ThemeIconButtons.buildIconButton(iconData: Icons.arrow_drop_down),
     );
   }
 
@@ -301,7 +342,8 @@ class ThemeInput {
   }
   
   static Container optionsSelector<T>({@required Options initialValue, String label, FormFieldValidator<String> validatorFunc,
-    @required TextEditingController controller, @required BuildContext context, String title, List<Options> options}){
+    @required TextEditingController controller, @required BuildContext context, String title, List<Options> options,
+    bool enabled = true}){
     OptionsPage optionsPage = OptionsPage(
       options: options,
       title: title,
@@ -309,16 +351,17 @@ class ThemeInput {
     );
     return _inputContainer(
       child: TextFormField(
+        showCursor: false,
+        enableInteractiveSelection: false,
         controller: controller,
         style: ThemeTextStyles.formText,
         validator: validatorFunc,
-        enabled: true,
-        maxLines: 1,
-        cursorColor: ThemeColors.highlightedData,
-        decoration: inputDecoration(label),
+        enabled: enabled,
+        decoration: inputDecorationWithSuffixIcon(label),
         onTap: (){
-          Navigator.push(context, MaterialPageRoute(builder:
-            (context) => optionsPage
+          Navigator.push(context,
+            MaterialPageRoute(
+              builder: (context) => optionsPage
             )
           )..then((val){
             controller.text = optionsPage.selectedOption.name;

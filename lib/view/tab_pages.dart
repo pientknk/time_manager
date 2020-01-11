@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:time_manager/model/data.dart';
-import 'package:time_manager/model/data_samples.dart';
+import 'package:time_manager/common/data_access_layer/data_samples.dart';
 import 'package:time_manager/common/theme.dart';
 import 'package:time_manager/view/project_page.dart';
 import 'package:time_manager/common/app_custom_scroll_view.dart';

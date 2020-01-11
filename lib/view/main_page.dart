@@ -4,6 +4,7 @@ import 'package:time_manager/common/app_scaffold.dart';
 import 'package:time_manager/view/tab_pages.dart';
 import 'package:time_manager/common/routing.dart';
 import 'package:fluro/fluro.dart';
+import 'package:time_manager/common/user_prefs.dart';
 
 class MainPage extends StatefulWidget {
   MainPage({Key key, this.title}) : super(key: key);
@@ -60,6 +61,9 @@ class _MainPageState extends State<MainPage>
       floatingActionButton: AppScaffoldFAB(
         route: "${Routing.projectAddRoute}/1",
         tooltip: 'Add a Project',
+        notifyParent: (){
+
+        },
       ),
       bottomNavigationBar: AppScaffoldBottomAppBar(
         color: ThemeColors.unselectedButtonColor,
@@ -75,5 +79,11 @@ class _MainPageState extends State<MainPage>
         backgroundColor: ThemeColors.appMain,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    UserPrefs.dispose();
+    super.dispose();
   }
 }

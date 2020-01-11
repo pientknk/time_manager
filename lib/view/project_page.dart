@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:time_manager/model/data.dart';
-import 'package:time_manager/model/data_samples.dart';
+import 'package:time_manager/common/notification_factory.dart';
+import 'package:time_manager/common/data_access_layer/data_samples.dart';
 import 'package:time_manager/common/app_scaffold.dart';
 import 'package:time_manager/common/theme.dart';
 import 'package:time_manager/common/data_utils.dart';
@@ -12,13 +12,15 @@ import 'package:flushbar/flushbar.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:time_manager/view/work_item_page.dart';
 import 'package:time_manager/common/more_options_popup_menu.dart';
-import 'package:time_manager/model/common/abstracts.dart';
+
+import '../model/model.dart';
+import '../tools/data_tools.dart';
 
 class ProjectAddPage extends StatefulWidget {
   final Project project;
 
   ProjectAddPage(String applicationID):
-      project = Project.newProject(applicationId: int.parse(applicationID));
+    project = Project();
 
   _ProjectAddPageState createState() => _ProjectAddPageState();
 }
@@ -38,14 +40,17 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
       text: ensureValue(
         value: widget.project.priority?.toString(), defaultValue: "0")
     );
-    _applicationController = TextEditingController(
-      text: ensureValue(
-        value: ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key)
-    );
-    _statusController = TextEditingController(
-      text: ensureValue(
-        value: StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key)
-    );
+
+    _applicationController = TextEditingController();
+    widget.project.getApplication().then((app){
+      _applicationController.text = app.name;
+    });
+
+    _statusController = TextEditingController();
+    widget.project.getStatusType().then((st){
+      _statusController.text = st.name;
+    });
+
     _nameController = TextEditingController(
       text: ensureValue(
         value: widget.project.name)
@@ -114,6 +119,7 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
   void save(BuildContext context){
     if(_formKey.currentState != null && _formKey.currentState.validate()){
       widget.project.priority = int.parse(_priorityController.text);
+      widget.project.getApplication().
       widget.project.applicationId = ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.key == _applicationController.text).value;
       widget.project.statusTypeId = StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.key == _statusController.text).value;
       widget.project.name = _nameController.text;
@@ -121,12 +127,15 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
       widget.project.startedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startedTimeController.text));
       widget.project.completedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_completedTimeController.text));
 
-      if(DataSamples.addProject(widget.project)){
-        Navigator.pop(context);
-      }
-      else{
-        print("Error saving project: ${widget.project.toString()}");
-      }
+      Helpers.projectHelper.create(widget.project).then((result){
+        if(result){
+          Navigator.push(context, NotificationFactory.successNotification(context: context));
+          //Navigator.pop(context);
+        }
+        else{
+          print("Error saving project: ${widget.project.toString()}");
+        }
+      });
     }
     else{
       print("Error validating project: ${widget.project.toString()}");
@@ -135,13 +144,13 @@ class _ProjectAddPageState extends State<ProjectAddPage> {
 }
 
 class ProjectDetailPage extends StatefulWidget {
-  final Project project;
+  final int projectId;
 
   @override
   _ProjectDetailPageState createState() => _ProjectDetailPageState();
 
   ProjectDetailPage(String id) :
-      project = DataSamples.getProjectByIdString(id);
+      projectId = int.parse(id);
 }
 
 class _ProjectDetailPageState extends State<ProjectDetailPage> {
@@ -153,6 +162,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
   TextEditingController _detailsController;
   TextEditingController _startedTimeController;
   TextEditingController _completedTimeController;
+  Project project;
 
   Widget getFlushBar(BuildContext context){
     return Flushbar<List<String>>(
@@ -231,54 +241,40 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
   @override
   void initState() {
-    _priorityController = TextEditingController(
-      text: ensureValue(
-        value: widget.project.priority?.toString(), defaultValue: "0")
-    );
-    _applicationController = TextEditingController(
-      text: ensureValue(
-        value: ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key)
-    );
-    _statusController = TextEditingController(
-      text: ensureValue(
-        value: StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key)
-    );
-    _nameController = TextEditingController(
-      text: ensureValue(
-        value: widget.project.name)
-    );
-    _detailsController = TextEditingController(
-      text: ensureValue(
-        value: widget.project.description)
-    );
-    _startedTimeController = TextEditingController(
-      text: ensureValue(
-        value: detailedDateFormatWithSeconds(widget.project.startedTime))
-    );
-    _completedTimeController = TextEditingController(
-      text: ensureValue(
-        value: detailedDateFormatWithSeconds(widget.project.completedTime))
-    );
+    Helpers.projectHelper.read(widget.projectId).then((pr){
+      project = pr;
+    });
+    assignControllers();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    List<WorkItem> _workItems = DataSamples.getAllWorkItemsForProject(widget.project.projectId);
+    List<String> _allFields = List<String>();
+    tableProject.fields.forEach((sqfEntityField){
+      _allFields.add(sqfEntityField.fieldName);
+    });
+    Future<List<WorkItem>> workItemsF = project.getWorkItems(columnsToSelect: _allFields).toList();
+    List<WorkItem> _workItems = List<WorkItem>();
+    workItemsF.then((workItems){
+      _workItems = workItems;
+    });
 
     return AppScaffold(
-      appBarTitle: ThemeText.appBarText('Project Details'),
+      appBarTitle: ThemeText.appBarText('Project'),
       appBarActions: <Widget>[
         ThemeIconButtons.buildIconButton(
           iconData: Icons.edit,
           onPressedFunc: () {
-            Routing.navigateTo(context, "${Routing.projectEditRoute}/${widget.project.projectId}");
+            Routing.navigateTo(context, "${Routing.projectEditRoute}/${project.id}")..whenComplete((){
+              refresh();
+            });
           }
         ),
         ThemeIconButtons.buildIconButton(
           iconData: Icons.delete_forever,
           onPressedFunc: () {
-            DataSamples.deleteProject(widget.project.projectId);
+            DataSamples.deleteProject(project.id);
             Navigator.pop(context);
             //delete it I guess?
           }
@@ -294,7 +290,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         collapsed: _floatingCollapsed(numWorkItems: _workItems.length),
         body: ProjectForm(
           formKey: _formKey,
-          project: widget.project,
+          project: project,
           priorityController: _priorityController,
           applicationController: _applicationController,
           statusController: _statusController,
@@ -305,7 +301,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         ),
       ),
       floatingActionButton: AppScaffoldFAB(
-        route: "${Routing.workItemAddRoute}/${widget.project.projectId}",
+        route: "${Routing.workItemAddRoute}/${project.id}",
         tooltip: 'Add a Work Item',
         notifyParent: refresh,
       ),
@@ -315,21 +311,36 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
   void refresh(){
     setState(() {
+      Helpers.projectHelper.read(widget.projectId).then((pr){
+        project = pr;
+      });
 
+      assignControllers();
     });
+  }
+
+  void assignControllers(){
+    _priorityController = ProjectHelper.getPriorityController(project);
+    _applicationController = ProjectHelper.getApplicationController(project);
+    _statusController = ProjectHelper.getStatusController(project);
+    _nameController = ProjectHelper.getNameController(project);
+    _detailsController = ProjectHelper.getDetailsController(project);
+    _startedTimeController = ProjectHelper.getStartedTimeController(project);
+    _completedTimeController = ProjectHelper.getCompletedTimeController(project);
   }
 }
 
 class ProjectEditPage extends StatefulWidget {
-  final Project project;
+  final int projectId;
 
   ProjectEditPage(String id) :
-      project = DataSamples.getProjectByIdString(id);
+      projectId = int.parse(id);
 
   _ProjectEditPageState createState() => _ProjectEditPageState();
 }
 
 class _ProjectEditPageState extends State<ProjectEditPage> {
+  Project project;
   final _formKey = GlobalKey<FormState>();
   TextEditingController _priorityController;
   TextEditingController _applicationController;
@@ -341,35 +352,11 @@ class _ProjectEditPageState extends State<ProjectEditPage> {
 
   @override
   void initState() {
+    Helpers.projectHelper.read(widget.projectId).then((pr){
+      project = pr;
+    });
+    assignControllers();
 
-    _priorityController = TextEditingController(
-      text: ensureValue(
-        value: widget.project.priority?.toString(), defaultValue: "0")
-    );
-    _applicationController = TextEditingController(
-      text: ensureValue(
-        value: ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key)
-    );
-    _statusController = TextEditingController(
-      text: ensureValue(
-        value: StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key)
-    );
-    _nameController = TextEditingController(
-      text: ensureValue(
-        value: widget.project.name)
-    );
-    _detailsController = TextEditingController(
-      text: ensureValue(
-        value: widget.project.description)
-    );
-    _startedTimeController = TextEditingController(
-      text: ensureValue(
-        value: detailedDateFormatWithSeconds(widget.project.startedTime))
-    );
-    _completedTimeController = TextEditingController(
-      text: ensureValue(
-        value: detailedDateFormatWithSeconds(widget.project.completedTime))
-    );
     super.initState();
   }
 
@@ -389,7 +376,7 @@ class _ProjectEditPageState extends State<ProjectEditPage> {
         ThemeIconButtons.buildIconButton(
           iconData: Icons.delete_forever,
           onPressedFunc: (){
-            DataSamples.projects.removeWhere((proj) => proj.projectId == widget.project.projectId);
+            Helpers.projectHelper.delete(project);
             Navigator.pop(context);
           }
         ),
@@ -403,7 +390,7 @@ class _ProjectEditPageState extends State<ProjectEditPage> {
       ],
       body: ProjectForm(
         formKey: _formKey,
-        project: widget.project,
+        project: project,
         enabled: true,
         priorityController: _priorityController,
         applicationController: _applicationController,
@@ -419,24 +406,36 @@ class _ProjectEditPageState extends State<ProjectEditPage> {
 
   void update(BuildContext context){
     if(_formKey.currentState != null && _formKey.currentState.validate()){
-      widget.project.priority = int.parse(_priorityController.text);
-      widget.project.applicationId = ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.key == _applicationController.text).value;
-      widget.project.statusTypeId = StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.key == _statusController.text).value;
-      widget.project.name = _nameController.text;
-      widget.project.description = _detailsController.text;
-      widget.project.startedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startedTimeController.text));
-      widget.project.completedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_completedTimeController.text));
+      project.priority = int.parse(_priorityController.text);
+      project.applicationId = ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.key == _applicationController.text).value;
+      project.statusTypeId = StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.key == _statusController.text).value;
+      project.name = _nameController.text;
+      project.description = _detailsController.text;
+      project.startedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startedTimeController.text));
+      project.completedTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_completedTimeController.text));
 
-      if(DataSamples.updateProject(widget.project)){
-        Navigator.pop(context);
-      }
-      else{
-        print("Error saving project: ${widget.project.toString()}");
-      }
+      Helpers.projectHelper.update(project).then((result){
+        if(result){
+          Navigator.pop(context);
+        }
+        else{
+          print("Error updating project $project");
+        }
+      });
     }
     else{
-      print("Error validating project: ${widget.project.toString()}");
+      print("Error validating project: ${project.toString()}");
     }
+  }
+
+  void assignControllers(){
+    _priorityController = ProjectHelper.getPriorityController(project);
+    _applicationController = ProjectHelper.getApplicationController(project);
+    _statusController = ProjectHelper.getStatusController(project);
+    _nameController = ProjectHelper.getNameController(project);
+    _detailsController = ProjectHelper.getDetailsController(project);
+    _startedTimeController = ProjectHelper.getStartedTimeController(project);
+    _completedTimeController = ProjectHelper.getCompletedTimeController(project);
   }
 }
 
@@ -498,111 +497,123 @@ class _ProjectFormState extends State<ProjectForm> with SingleTickerProviderStat
   final FocusNode completedTimeNode = new FocusNode();
 
   Widget _buildProjectForm({BuildContext context, bool enabled}) {
+    int applicationId;
+    widget.project.getApplication().then((app){
+      applicationId = app.id;
+    });
+    int statusTypeId;
+    widget.project.getStatusType().then((st){
+      statusTypeId = st.id;
+    });
     return ThemeForm.buildForm(
       formKey: widget.formKey,
       listViewChildren: <Widget>[
         ThemeInput.intFormField(
+          label: 'priority',
           enabled: widget.enabled,
           controller: widget.priorityController,
-          label: 'priority',
           textInputAction: TextInputAction.done,
           context: context,
           currentFocusNode: priorityNode,
+          validatorFunc: (val) {
+            return baseValidatorLengthValidation(
+              val: val,
+              fieldName: '',
+              maxLength: 3,
+            );
+          },
         ),
-        ThemeInput.optionsSelector<ApplicationNames>(
-          controller: widget.applicationController,
-          initialValue: DataSamples.getApplicationById(widget.project.applicationId),
-          options: List<Options>.from(DataSamples.applications),
-          context: context,
+
+        ThemeInput.optionsSelector(
           label: "Application",
           title: "Applications",
-        ),
-//        ThemeForm.buildFormFieldDropdown(
-//          enabled: enabled,
-//          labelText: 'application',
-//          value: widget.project.applicationId == null
-//            ? ApplicationNames.options.entries.first
-//            : ApplicationNames.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.applicationId).key,
-//          options: ApplicationNames.options.keys.toList(),
-//          onChangedFunc: (String value) {
-//            setState(() {
-//              widget.project.applicationId = ApplicationNames.options[value];
-//            });
-//          }
-//        ),
-        ThemeInput.optionsSelector<StatusTypes>(
-          controller: widget.statusController,
-          initialValue: DataSamples.getStatusTypeById(widget.project.statusTypeId),
-          options: List<Options>.from(DataSamples.statusTypes),
+          controller: widget.applicationController,
+          initialValue: DataSamples.getApplicationById(applicationId),
+          options: DataSamples.applications,
+          enabled: enabled,
           context: context,
-          label: "Status Type",
-          title: "Status Types"
         ),
-        /*ThemeForm.buildFormFieldDropdown(
+        ThemeInput.optionsSelector(
+          label: "Status Type",
+          title: "Status Types",
+          controller: widget.statusController,
+          initialValue: DataSamples.getStatusTypeById(statusTypeId),
+          options: DataSamples.statusTypes,
           enabled: enabled,
-          labelText: 'status',
-          value: widget.project.statusTypeId == null
-            ? StatusTypes.options.entries.first.key
-            : StatusTypes.options.entries.firstWhere((mapEntry) => mapEntry.value == widget.project.statusTypeId).key,
-          options: StatusTypes.options.keys.toList(),
-          onChangedFunc: (String value) {
-            setState(() {
-              widget.project.statusTypeId = StatusTypes.options[value];
-            });
-          }
-        ),*/
+          context: context,
+        ),
         ThemeInput.textFormField(
+          label: 'Name*',
           enabled: enabled,
-          label: 'Name',
           controller: widget.nameController,
           textInputAction: TextInputAction.next,
           currentFocusNode: nameNode,
           nextFocusNode: detailsNode,
           context: context,
+          validatorFunc: (val) {
+            return baseValidatorLengthValidation(
+              val: val,
+              fieldName: '',
+              maxLength: 75,
+            );
+          },
         ),
         ThemeInput.textFormField(
+          label: 'Details*',
           enabled: enabled,
-          label: 'Details',
           controller: widget.detailsController,
           textInputAction: TextInputAction.next,
           currentFocusNode: detailsNode,
           nextFocusNode: startedTimeNode,
           context: context,
           maxLines: 2,
+          validatorFunc: (val) {
+            return baseValidatorLengthValidation(
+              val: val,
+              fieldName: '',
+              maxLength: 225,
+            );
+          },
         ),
         ThemeInput.dateTimeField(
+          label: 'started',
           textInputAction: TextInputAction.next,
           enabled: enabled,
           context: context,
           currentFocusNode: startedTimeNode,
           nextFocusNode: completedTimeNode,
-          label: 'started',
           textEditingController: widget.startedTimeController,
           format: DateFormat(detailedDateFormatWithSecondsString),
+          /*validatorFunc: (val) {
+            return baseValidatorDateTimeRequiredValidation(
+              val: val,
+              fieldName: '',
+            );
+          }*/
         ),
         ThemeInput.dateTimeField(
+          label: 'completed',
           textInputAction: TextInputAction.done,
           enabled: enabled,
           context: context,
           currentFocusNode: completedTimeNode,
-          label: 'completed',
           textEditingController: widget.completedTimeController,
           format: DateFormat(detailedDateFormatWithSecondsString),
         ),
         ThemeForm.buildFormRowFromFields(
           children: <Widget>[
             ThemeInput.intFormField(
+              label: 'work items',
               controller: TextEditingController(
                 text: ensureValue(
-                  value: widget.project.workItemCount?.toString(),
+                  value: ProjectHelper.workItemCount(widget.project).toString(),
                   defaultValue: "0")
               ),
               enabled: false,
-              label: 'work items',
             ),
             ThemeInput.textFormField(
               label: 'total hours',
-              controller: TextEditingController(text: shortDurationFormat(widget.project.totalHours)),
+              controller: TextEditingController(text: shortDurationFormat(ProjectHelper.totalHours(widget.project))),
               enabled: false,
             ),
           ]
@@ -659,8 +670,8 @@ class ProjectCard extends StatelessWidget{
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          _buildLabelAndData('Hours', shortDurationFormat(project.totalHours)),
-          _buildLabelAndData('Items', project.workItemCount.toString()),
+          _buildLabelAndData('Hours', shortDurationFormat(ProjectHelper.totalHours(project))),
+          _buildLabelAndData('Items', ProjectHelper.workItemCount(project).toString()),
           _buildLabelAndData('Started', veryShortDateFormat(project.startedTime ?? DateTime.now())),
         ],
       )
@@ -692,7 +703,7 @@ class ProjectCard extends StatelessWidget{
             child: Column(
               children: <Widget>[
                 MoreOptionsPopupMenu(
-                  idFieldValue: project.projectId,
+                  idFieldValue: project.id,
                   detailRouteName: Routing.projectDetailRoute,
                   editRouteName: Routing.projectEditRoute,
                   deleteWhat: project.name,
@@ -737,7 +748,7 @@ class ProjectCard extends StatelessWidget{
       margin: const EdgeInsets.only(top: 16, bottom: 8),
       child: FlatButton(
         onPressed: () {
-          Routing.navigateTo(context, "${Routing.projectDetailRoute}/${project.projectId}", transition: TransitionType.fadeIn);
+          Routing.navigateTo(context, "${Routing.projectDetailRoute}/${project.id}", transition: TransitionType.fadeIn);
         },
         child: _buildCardContents(context),
       ),

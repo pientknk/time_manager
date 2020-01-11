@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:time_manager/model/data.dart';
-import 'package:time_manager/model/data_samples.dart';
+//import 'package:time_manager/model/data.dart';
+import 'package:time_manager/common/data_access_layer/data_samples.dart';
 import 'dart:async';
 import 'package:time_manager/common/data_utils.dart';
 import 'package:time_manager/common/app_scaffold.dart';
@@ -10,17 +10,22 @@ import 'package:time_manager/common/routing.dart';
 import 'package:intl/intl.dart';
 import 'package:time_manager/common/more_options_popup_menu.dart';
 
+import '../model/model.dart';
+import '../tools/data_tools.dart';
+
 class WorkItemAddPage extends StatefulWidget {
-  final Project project;
+  final int projectId;
+  final WorkItemHelper workItemHelper = WorkItemHelper();
 
   WorkItemAddPage(String id) :
-    project = DataSamples.getProjectById(int.parse(id));
+    projectId = int.parse(id);
 
   _WorkItemAddPageState createState() => _WorkItemAddPageState();
 }
 
 class _WorkItemAddPageState extends State<WorkItemAddPage> {
   final _formKey = GlobalKey<FormState>();
+  Project project;
 
   WorkItem workItem;
   TextEditingController _endTimeController;
@@ -30,7 +35,12 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
 
   @override
   void initState() {
-    workItem = WorkItem.newWorkItem(projectId: widget.project.projectId);
+    Helpers.projectHelper.read(widget.projectId).then((p){
+      project = p;
+    });
+
+    workItem = WorkItem();
+    //workItem = WorkItem.newWorkItem(projectId: widget.project.projectId);
     _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.endTime));
     _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.startTime));
     _summaryController = TextEditingController(text: workItem.summary);
@@ -118,13 +128,16 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
       workItem.summary = _summaryController.text;
       workItem.startTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startTimeController.text));
       workItem.endTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_endTimeController.text));
-      if(DataSamples.addWorkItem(workItem)){
-        Navigator.pop(context);
-      }
-      else{
-        print("error saving work Item: $workItem");
-        //something is wrong
-      }
+
+      workItem.save().then((result){
+        bool val = intResultToBool(result);
+        if(val){
+          Navigator.pop(context);
+        }
+        else{
+          print("error saving work Item: $workItem");
+        }
+      });
     }
     else{
       print("error saving work Item: $workItem");
@@ -134,10 +147,11 @@ class _WorkItemAddPageState extends State<WorkItemAddPage> {
 }
 
 class WorkItemDetailPage extends StatefulWidget {
-  final WorkItem workItem;
+  final int workItemId;
+  //final WorkItem workItem;
 
   WorkItemDetailPage(String id) :
-      workItem = DataSamples.getWorkItemByIdString(id);
+    workItemId = int.parse(id);
 
   _WorkItemDetailPageState createState() => _WorkItemDetailPageState();
 
@@ -145,6 +159,7 @@ class WorkItemDetailPage extends StatefulWidget {
 
 class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
   final _formKey = GlobalKey<FormState>();
+  WorkItem workItem;
   Project project;
   TextEditingController _endTimeController;
   TextEditingController _startTimeController;
@@ -153,11 +168,16 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
 
   @override
   void initState() {
-    project = DataSamples.getProjectById(widget.workItem.projectId);
-    _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.endTime));
-    _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.startTime));
-    _summaryController = TextEditingController(text: widget.workItem.summary);
-    _detailsController = TextEditingController(text: widget.workItem.details);
+    Helpers.workItemHelper.read(widget.workItemId).then((w){
+      workItem = w;
+    });
+    workItem.getProject().then((pr){
+      project = pr;
+    });
+    _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.endTime));
+    _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.startTime));
+    _summaryController = TextEditingController(text: workItem.summary);
+    _detailsController = TextEditingController(text: workItem.details);
     super.initState();
   }
 
@@ -172,14 +192,13 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    project = DataSamples.getProjectById(widget.workItem.projectId);
     return AppScaffold(
       appBarTitle: ThemeText.appBarText('Work Item Details'),
       appBarActions: <Widget>[
         ThemeIconButtons.buildIconButton(
           iconData: Icons.edit,
           onPressedFunc: () {
-            Routing.navigateTo(context, "${Routing.workItemEditRoute}/${widget.workItem.workItemId}")..then((val){
+            Routing.navigateTo(context, "${Routing.workItemEditRoute}/${workItem.id}")..then((val){
               Navigator.pop(context);
             });
           }
@@ -187,7 +206,7 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
         ThemeIconButtons.buildIconButton(
           iconData: Icons.delete_forever,
           onPressedFunc: () {
-            DataSamples.deleteWorkItem(widget.workItem.workItemId);
+            DataSamples.deleteWorkItem(workItem.id);
             Navigator.pop(context);
           }
         ),
@@ -200,7 +219,7 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
     return Column(
       children: <Widget>[
         WorkItemClock(
-          workItem: widget.workItem,
+          workItem: workItem,
           endTimeController: _endTimeController,
           isCounting: false,
         ),
@@ -225,7 +244,7 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
       flex: 5,
       child: WorkItemForm(
         formKey: _formKey,
-        workItem: widget.workItem,
+        workItem: workItem,
         enabled: false,
         endTimeController: _endTimeController,
         startTimeController: _startTimeController,
@@ -237,10 +256,10 @@ class _WorkItemDetailPageState extends State<WorkItemDetailPage> {
 }
 
 class WorkItemEditPage extends StatefulWidget {
-  final WorkItem workItem;
+  final int workItemId;
 
   WorkItemEditPage(String id) :
-      workItem = DataSamples.getWorkItemByIdString(id);
+      workItemId = int.parse(id);
 
   _WorkItemEditPageState createState() => _WorkItemEditPageState();
 }
@@ -248,6 +267,7 @@ class WorkItemEditPage extends StatefulWidget {
 class _WorkItemEditPageState extends State<WorkItemEditPage> {
   final _formKey = GlobalKey<FormState>();
   Project project;
+  WorkItem workItem;
   TextEditingController _endTimeController;
   TextEditingController _startTimeController;
   TextEditingController _summaryController;
@@ -255,11 +275,17 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
 
   @override
   void initState() {
-    project = DataSamples.getProjectById(widget.workItem.projectId);
-    _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.endTime));
-    _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.startTime));
-    _summaryController = TextEditingController(text: widget.workItem.summary);
-    _detailsController = TextEditingController(text: widget.workItem.details);
+    Helpers.workItemHelper.read(widget.workItemId).then((w){
+      workItem = w;
+    });
+    workItem.getProject().then((p){
+      project = p;
+    });
+
+    _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.endTime));
+    _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(workItem.startTime));
+    _summaryController = TextEditingController(text: workItem.summary);
+    _detailsController = TextEditingController(text: workItem.details);
     super.initState();
   }
 
@@ -311,7 +337,7 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
     return Column(
       children: <Widget>[
         WorkItemClock(
-          workItem: widget.workItem,
+          workItem: workItem,
           endTimeController: _endTimeController,
           isCounting: false,
         ),
@@ -335,7 +361,7 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
     return Expanded(
       flex: 5,
       child: WorkItemForm(
-        workItem: widget.workItem,
+        workItem: workItem,
         formKey: _formKey,
         enabled: true,
         endTimeController: _endTimeController,
@@ -348,33 +374,23 @@ class _WorkItemEditPageState extends State<WorkItemEditPage> {
 
   void update(BuildContext context){
     if(_formKey.currentState != null && _formKey.currentState.validate()){
-      widget.workItem.details = _detailsController.text;
-      widget.workItem.summary = _summaryController.text;
-      widget.workItem.startTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startTimeController.text));
-      widget.workItem.endTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_endTimeController.text));
-      if(DataSamples.updateWorkItem(widget.workItem)){
-        //TODO: need to pop state but go back to the details screen after it saves rather than the project details
-        Navigator.pop(context);
-/*        setState(() {
-          FocusScopeNode currentFocus = FocusScope.of(context);
-          if(!currentFocus.hasPrimaryFocus){
-            currentFocus.unfocus();
-          }
+      workItem.details = _detailsController.text;
+      workItem.summary = _summaryController.text;
+      workItem.startTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_startTimeController.text));
+      workItem.endTime = DateTime.parse(reformatDetailedDateFormatWithSecondsString(_endTimeController.text));
 
-          _endTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.endTime));
-          _startTimeController = TextEditingController(text: detailedDateFormatWithSeconds(widget.workItem.startTime));
-          _summaryController = TextEditingController(text: widget.workItem.summary);
-          _detailsController = TextEditingController(text: widget.workItem.details);
-
-        });*/
-      }
-      else{
-        print("error saving work Item: ${widget.workItem}");
-        //something is wrong
-      }
+      workItem.save().then((result){
+        bool val = intResultToBool(result);
+        if(val){
+          Navigator.pop(context);
+        }
+        else{
+          print("error saving work Item: $workItem");
+        }
+      });
     }
     else{
-      print("error saving work Item: ${widget.workItem}");
+      print("error saving work Item: $workItem");
       //something else is wrong
     }
   }
@@ -408,7 +424,7 @@ class WorkItemCard extends StatelessWidget{
       child: FlatButton(
         padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 1),
         onPressed: () {
-          Routing.navigateTo(context, "${Routing.workItemDetailRoute}/${workItem.workItemId}");
+          Routing.navigateTo(context, "${Routing.workItemDetailRoute}/${workItem.id}");
         },
         child: _buildCardContents(context),
       ),
@@ -438,7 +454,7 @@ class WorkItemCard extends StatelessWidget{
                         child: Center(
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5),
-                            child: ThemeText.highlightedText(shortDurationFormat(workItem.duration)),
+                            child: ThemeText.highlightedText(shortDurationFormat(Helpers.workItemHelper.duration(workItem))),
                             //color: Colors.blue[500],
                           ),
                         ),
@@ -483,7 +499,7 @@ class WorkItemCard extends StatelessWidget{
             child: Align(
               alignment: Alignment.centerRight,
               child: MoreOptionsPopupMenu(
-                idFieldValue: workItem.workItemId,
+                idFieldValue: workItem.id,
                 detailRouteName: Routing.workItemDetailRoute,
                 editRouteName: Routing.workItemEditRoute,
                 deleteWhat: workItem.summary,
@@ -632,7 +648,7 @@ class _WorkItemClockState extends State<WorkItemClock> {
 
   @override
   void initState() {
-    _duration = widget.workItem.duration ?? Duration();
+    _duration = Helpers.workItemHelper.duration(widget.workItem) ?? Duration();
     if(widget.isCounting){
       startTimer();
     }

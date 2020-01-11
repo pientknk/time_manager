@@ -24,6 +24,22 @@ class DataSamples{
     return isDataInitialized;
   }
 
+  static bool addObject<T>(T object){
+    return false;
+    /*if(workItem.projectId == null || workItem.summary == null || workItem.details == null || workItem.startTime == null || workItem.endTime == null){
+      return false;
+    }
+    else{
+      return addWorkItemByProp(
+        projectId: workItem.projectId,
+        summary: workItem.summary,
+        details: workItem.details,
+        startTime: workItem.startTime,
+        endTime: workItem.endTime,
+      );
+    }*/
+  }
+
   static List<Project> projects = [];
   static Iterable<Project> _getProjects(){
     return [
@@ -185,8 +201,8 @@ class DataSamples{
   static List<StatusType> statusTypes = [];
   static Iterable<StatusType> _getStatusTypes(){
     return [
-      StatusType(statusTypeId: 1, name: "Assigned"),
-      StatusType(statusTypeId: 2, name: "Available"),
+      StatusType(statusTypeId: 1, name: "Assigned", description: "Assigned this to yourself"),
+      StatusType(statusTypeId: 2, name: "Available", description: "Available for you to pickup"),
       StatusType(statusTypeId: 3, name: "Finished"),
       StatusType(statusTypeId: 4, name: "Voided"),
       StatusType(statusTypeId: 5, name: "Dependent"),

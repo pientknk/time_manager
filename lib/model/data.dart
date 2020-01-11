@@ -1,14 +1,31 @@
-import 'dart:collection';
-
 import 'package:time_manager/model/common/abstracts.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
-import 'package:time_manager/common/lite_database.dart';
-import 'package:time_manager/model/data_samples.dart';
+import 'package:time_manager/common/data_access_layer/lite_database.dart';
+import 'package:time_manager/common/data_access_layer/data_samples.dart';
+import 'package:time_manager/common/data_utils.dart';
+import 'package:json_annotation/json_annotation.dart';
+import 'model.dart';
+import 'package:sqfentity_gen/sqfentity_gen.dart';
+
+//run command 'flutter packages pub run build_runner build' to rebuild this file
+
+enum SaveModeState {
+  sqlLite,
+  sqfEntity,
+  firebase,
+}
+
+class SaveMode {
+  const SaveMode();
+
+  static SaveModeState state;
+}
 
 WorkItem workItemFromJson(String str) => WorkItem.fromJson(json.decode(str));
 String workItemToJson(WorkItem data) => json.encode(data.toJson());
 
+@JsonSerializable(nullable: false)
 class WorkItem implements Data{
   int workItemId;
   DateTime createdTime;
@@ -94,21 +111,18 @@ class WorkItem implements Data{
   };
 
   @override
-  bool save() {
-    // TODO: implement save
-    return null;
+  Future<bool> save<T>() async {
+    return false;
   }
 
   @override
   T read<T>() {
-    // TODO: implement read
     return null;
   }
 
   @override
-  bool update() {
-    // TODO: implement update
-    return null;
+  bool update(){
+    return false;
   }
 
   @override
@@ -134,12 +148,14 @@ class WorkItem implements Data{
 
   @override
   Future<int> sqlLiteUpdate() {
-    return LiteDBProvider.liteDB.sqlLiteBaseUpdate(WorkItem, toJson(), workItemId, "workItemId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseUpdate(WorkItem, toJson(), workItemId, "workItemId");
   }
 
   @override
   Future<int> sqlLiteDelete() {
-    return LiteDBProvider.liteDB.sqlLiteBaseDelete(WorkItem, workItemId, "workItemId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseDelete(WorkItem, workItemId, "workItemId");
   }
 }
 
@@ -163,6 +179,26 @@ class Category implements Data, Options {
     this.updatedTime,
   });
 
+  @override
+  Future<Iterable<String>> options() async {
+    List<String> options = List<String>();
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        // TODO: Handle this case.
+        break;
+      case SaveModeState.sqfEntity:
+        // TODO: Handle this case.
+        break;
+      case SaveModeState.firebase:
+        // TODO: Handle this case.
+        break;
+      default:
+        break;
+    }
+
+    return options;
+  }
+
   static Category fromJson(Map<String, dynamic> json) => Category(
     categoryId: json["categoryId"],
     createdTime: json["createdTime"],
@@ -180,9 +216,17 @@ class Category implements Data, Options {
   };
 
   @override
-  bool save() {
-    // TODO: implement save
-    return null;
+  Future<bool> save<T>() async {
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return false;
+      case SaveModeState.sqfEntity:
+        return false;
+      case SaveModeState.firebase:
+        return false;
+      default:
+        return false;
+    }
   }
 
   @override
@@ -220,12 +264,14 @@ class Category implements Data, Options {
 
   @override
   Future<int> sqlLiteUpdate() {
-    return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Category, toJson(), categoryId, "categoryId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Category, toJson(), categoryId, "categoryId");
   }
 
   @override
   Future<int> sqlLiteDelete() {
-    return LiteDBProvider.liteDB.sqlLiteBaseDelete(Category, categoryId, "categoryId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseDelete(Category, categoryId, "categoryId");
   }
 }
 
@@ -249,6 +295,7 @@ class Project implements Data, Options {
   int workItemCount;
   int categoryId;
   int projectTypeId;
+  List<String> comments; //??
 
   Project({
     this.projectId,
@@ -268,6 +315,7 @@ class Project implements Data, Options {
   Project.newProject({@required this.applicationId}){
     DateTime createdTime = DateTime.now();
     this.startedTime = createdTime;
+    this.completedTime = DateTime(2999);
     this.createdTime = createdTime;
     this.statusTypeId = 2;
     this.applicationId = applicationId;
@@ -281,12 +329,33 @@ class Project implements Data, Options {
     String status = StatusTypes.available, int workItems = 19, int priority = 999}){
     //TODO: retrieve info about application from the appID
     String appName = ApplicationNames.options[projectId];
-    
+
     DateTime createdTime = DateTime.now();
     return Project._(projectId: projectId, applicationId: applicationId, createdTime: createdTime, updatedTime: createdTime,
       name: name, details: details, status: status, totalHours: totalHours, workItemCount: workItems, applicationName: appName, priority: priority
     );
   }*/
+
+  @override
+  Future<Iterable<String>> options() async {
+    List<String> options = List<String>();
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        options = DataSamples.projects.map((project) => project.name);
+        break;
+      case SaveModeState.sqfEntity:
+        List<Project> projects = await sqlLiteSelectAll();
+        options = projects.map((project) => project.name);
+        break;
+      case SaveModeState.firebase:
+        // TODO: Handle this case.
+        break;
+      default:
+        break;
+    }
+
+    return options;
+  }
 
   static Project fromJson(Map<String, dynamic> json) => Project(
     projectId: json["projectId"],
@@ -302,6 +371,21 @@ class Project implements Data, Options {
     categoryId: json["categoryId"],
     projectTypeId: json["projectTypeId"],
   );
+
+  void updateFromJson(Map<String, dynamic> json) => {
+    this.projectId: json["projectId"],
+    this.applicationId: json["applicationId"],
+    this.name: json["name"],
+    this.description: json["details"],
+    this.priority: json["priority"],
+    this.statusTypeId: json["statusTypeId"],
+    this.startedTime: json["startedTime"],
+    this.completedTime: json["completedTime"],
+    this.totalHours: json["totalHours"],
+    this.workItemCount: json["workItemCount"],
+    this.categoryId: json["categoryId"],
+    this.projectTypeId: json["projectTypeId"],
+  };
 
   Map<String, dynamic> toJson() => {
     "projectId": projectId,
@@ -319,40 +403,76 @@ class Project implements Data, Options {
   };
 
   @override
-  bool save() {
-    // TODO: implement save
-    //if can't connect to an actual db, use sqllite
-    return null;
+  Future<bool> save<T>() async {
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return DataSamples.addProject(this);
+      case SaveModeState.sqfEntity:
+        int returnVal = await sqlLiteInsert();
+        return returnVal == 1;
+      case SaveModeState.firebase:
+        return false;
+      default:
+        return false;
+    }
   }
 
   @override
   T read<T>() {
-    // TODO: implement read
-    return null;
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return null;
+      case SaveModeState.sqfEntity:
+        return null;
+      case SaveModeState.firebase:
+        // TODO: Handle this case.
+        return null;
+      default:
+        return null;
+    }
   }
 
   @override
   bool update() {
-    // TODO: implement update
-    return null;
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return DataSamples.updateProject(this);
+      case SaveModeState.sqfEntity:
+        //int updateVal = await sqlLiteUpdate();
+        //return updateVal == 1;
+        return null;
+      case SaveModeState.firebase:
+        return null;
+      default:
+        return null;
+    }
   }
 
   @override
   bool delete() {
-    // TODO: implement delete
-    //if can't connect to an actual db, use sqllite
-    return null;
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return DataSamples.deleteProject(this.projectId);
+      case SaveModeState.sqfEntity:
+        //int deleteVal = await sqlLiteDelete();
+        //return deleteVal == 1;
+        return false;
+      case SaveModeState.firebase:
+        // TODO: Handle this case.
+        break;
+    }
+
+    return false;
   }
 
   @override
   Future<int> sqlLiteInsert() {
-    // TODO: implement sqlLiteInsert
-    return null;
+    return LiteDBProvider.liteDB.sqlLiteBaseInsert(Project, toJson());
   }
 
   @override
   Future<T> sqlLiteSelect<T>() {
-    return LiteDBProvider.liteDB.sqlLiteBaseSelect<T>(fromJson, Project, "projectId = ?", [projectId]);
+    return LiteDBProvider.liteDB.sqlLiteBaseSelect<T>(fromJson, Project, "projectId = ?", [this.projectId]);
   }
 
   @override
@@ -366,12 +486,14 @@ class Project implements Data, Options {
 
   @override
   Future<int> sqlLiteUpdate() {
-    return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Project, toJson(), projectId, "projectId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Project, toJson(), projectId, "projectId");
   }
 
   @override
   Future<int> sqlLiteDelete() {
-    return LiteDBProvider.liteDB.sqlLiteBaseDelete<Project>(Project, projectId, "projectId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseDelete<Project>(Project, projectId, "projectId");
   }
 }
 
@@ -432,9 +554,17 @@ class StatusType implements Data, Options {
   };
 
   @override
-  bool save() {
-    // TODO: implement save
-    return null;
+  Future<bool> save<T>() async {
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return false;
+      case SaveModeState.sqfEntity:
+        return false;
+      case SaveModeState.firebase:
+        return false;
+      default:
+        return false;
+    }
   }
 
   @override
@@ -482,6 +612,12 @@ class StatusType implements Data, Options {
   @override
   Future<int> sqlLiteDelete() {
     // TODO: implement sqlLiteDelete
+    return null;
+  }
+
+  @override
+  Future<Iterable<String>> options() {
+    // TODO: implement options
     return null;
   }
 }
@@ -559,9 +695,17 @@ class Filter implements Data, Options {
     this.statusTypeId = filter.statusTypeId;
 
   @override
-  bool save() {
-    // TODO: implement save
-    return null;
+  Future<bool> save<T>() async {
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return false;
+      case SaveModeState.sqfEntity:
+        return false;
+      case SaveModeState.firebase:
+        return false;
+      default:
+        return false;
+    }
   }
 
   @override
@@ -599,12 +743,20 @@ class Filter implements Data, Options {
 
   @override
   Future<int> sqlLiteUpdate() {
-    return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Filter, toJson(), filterId, "filterId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Filter, toJson(), filterId, "filterId");
   }
 
   @override
   Future<int> sqlLiteDelete() {
-    return LiteDBProvider.liteDB.sqlLiteBaseDelete(Filter, filterId, "filterId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseDelete(Filter, filterId, "filterId");
+  }
+
+  @override
+  Future<Iterable<String>> options() {
+    // TODO: implement options
+    return null;
   }
 }
 
@@ -669,9 +821,17 @@ class Application implements Data, Options{
   };
 
   @override
-  bool save() {
-    // TODO: implement save
-    return null;
+  Future<bool> save<T>() async {
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return false;
+      case SaveModeState.sqfEntity:
+        return false;
+      case SaveModeState.firebase:
+        return false;
+      default:
+        return false;
+    }
   }
 
   @override
@@ -694,7 +854,8 @@ class Application implements Data, Options{
 
   @override
   Future<int> sqlLiteDelete() {
-    return LiteDBProvider.liteDB.sqlLiteBaseDelete(Application, applicationId, "applicationId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseDelete(Application, applicationId, "applicationId");
   }
 
   @override
@@ -714,7 +875,14 @@ class Application implements Data, Options{
 
   @override
   Future<int> sqlLiteUpdate() {
-    return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Application, toJson(), applicationId, "applicationId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Application, toJson(), applicationId, "applicationId");
+  }
+
+  @override
+  Future<Iterable<String>> options() {
+    // TODO: implement options
+    return null;
   }
 }
 
@@ -755,9 +923,17 @@ class System implements Data, Options {
   };
 
   @override
-  bool save() {
-    // TODO: implement save
-    return null;
+  Future<bool> save<T>() async {
+    switch(SaveMode.state){
+      case SaveModeState.sqlLite:
+        return false;
+      case SaveModeState.sqfEntity:
+        return false;
+      case SaveModeState.firebase:
+        return false;
+      default:
+        return false;
+    }
   }
 
   @override
@@ -805,6 +981,12 @@ class System implements Data, Options {
   @override
   Future<int> sqlLiteDelete() {
     // TODO: implement sqlLiteDelete
+    return null;
+  }
+
+  @override
+  Future<Iterable<String>> options() {
+    // TODO: implement options
     return null;
   }
 }
@@ -836,7 +1018,7 @@ class Settings implements Data {
   };
 
   @override
-  bool save() {
+  Future<bool> save<T>() async {
     // TODO: implement save
     return null;
   }
@@ -861,7 +1043,8 @@ class Settings implements Data {
 
   @override
   Future<int> sqlLiteDelete() {
-    return LiteDBProvider.liteDB.sqlLiteBaseDelete(Settings, settingsId, "settingsId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseDelete(Settings, settingsId, "settingsId");
   }
 
   @override
@@ -881,7 +1064,8 @@ class Settings implements Data {
 
   @override
   Future<int> sqlLiteUpdate() {
-    return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Settings, toJson(), settingsId, "settingsId");
+    return null;
+    //return LiteDBProvider.liteDB.sqlLiteBaseUpdate(Settings, toJson(), settingsId, "settingsId");
   }
 }
 
@@ -904,7 +1088,7 @@ class ProjectType implements Data, Options{
   });
 
   @override
-  bool save() {
+  Future<bool> save<T>() async {
     // TODO: implement save
     return null;
   }
@@ -954,6 +1138,12 @@ class ProjectType implements Data, Options{
   @override
   Future<int> sqlLiteDelete() {
     // TODO: implement sqlLiteDelete
+    return null;
+  }
+
+  @override
+  Future<Iterable<String>> options() {
+    // TODO: implement options
     return null;
   }
 }

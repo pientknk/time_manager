@@ -1,17 +1,32 @@
+import 'package:catcher/catcher_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:time_manager/common/catcher_factory.dart';
 import 'package:time_manager/common/routing.dart';
+import 'package:time_manager/common/user_prefs.dart';
+import 'package:time_manager/model/data.dart';
 import 'package:time_manager/view/main_page.dart';
-import 'package:time_manager/model/data_samples.dart';
+import 'package:time_manager/common/data_access_layer/data_samples.dart';
 import 'package:time_manager/common/debug.dart';
 import 'package:flutter/services.dart';
 
-void main() {
+import 'model/model.dart';
+
+void main() async {
   //setup before running the app
   Routing.initRoutes();
   bool isDataSetup = DataSamples.initData();
   if(!isDataSetup){
     Debug.debugPrintMessage('Error setting up sample data');
   }
+
+  //initialize the save mode for testing
+  //TODO: Eventually make this a setting to update in the app during testing
+  SaveMode.state = SaveModeState.sqlLite;
+  print(SaveModeState.sqlLite.toString());
+
+  UserPrefs.init();
+
+  CatcherFactory.standardCatcher(MyApp());
 
   runApp(MyApp());
 }
